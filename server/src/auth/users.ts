@@ -6,6 +6,7 @@ interface StoredUser {
 	username: string;
 	passwordHash: string;
 	partnerId?: string;
+	partnerUsername?: string;
 }
 
 // In a real app, this would be in a database
@@ -20,13 +21,21 @@ export const authService = {
 		const userId = crypto.randomUUID();
 		const passwordHash = crypto.createHash("sha256").update(password).digest("hex");
 
-		users.set(userId, {
+		const user = {
 			userId,
 			username,
 			passwordHash,
-		});
+		};
 
-		return { success: true, userId };
+		users.set(userId, user);
+
+		return {
+			success: true,
+			userId,
+			username, // Include username in response
+			partnerId: undefined,
+			partnerUsername: undefined,
+		};
 	},
 
 	async login(username: string, password: string): Promise<AuthResponse> {
@@ -40,25 +49,53 @@ export const authService = {
 			return { success: false, error: "Invalid password" };
 		}
 
-		return { success: true, userId: user.userId };
+		return {
+			success: true,
+			userId: user.userId,
+			username: user.username,
+			partnerId: user.partnerId,
+			partnerUsername: user.partnerUsername,
+		};
 	},
 
-	async pairUsers(userId: string, partnerUsername: string): Promise<boolean> {
+	async pairUsers(userId: string, partnerUsername: string): Promise<AuthResponse> {
 		const user = users.get(userId);
 		const partner = Array.from(users.values()).find((u) => u.username === partnerUsername);
 
-		if (!user || !partner) return false;
+		if (!user) {
+			return { success: false, error: "User not found" };
+		}
+
+		if (!partner) {
+			return { success: false, error: "Partner not found" };
+		}
 
 		user.partnerId = partner.userId;
+		user.partnerUsername = partner.username;
 		partner.partnerId = user.userId;
+		partner.partnerUsername = user.username;
 
 		users.set(userId, user);
 		users.set(partner.userId, partner);
 
-		return true;
+		console.log("Paired users:", {
+			user1: { id: user.userId, username: user.username, partnerId: user.partnerId },
+			user2: { id: partner.userId, username: partner.username, partnerId: partner.partnerId },
+		});
+
+		return {
+			success: true,
+			userId: user.userId,
+			username: user.username,
+			partnerId: partner.userId,
+			partnerUsername: partner.username,
+		};
 	},
 
 	getUserPartnerId(userId: string): string | undefined {
 		return users.get(userId)?.partnerId;
+	},
+	getUserByUsername(username: string): StoredUser | undefined {
+		return Array.from(users.values()).find((u) => u.username === username);
 	},
 };

@@ -1,0 +1,102 @@
+<!DOCTYPE html>
+<html>
+	<head>
+		<meta charset="UTF-8" />
+		<title>Love Note</title>
+		<style>
+			body {
+				margin: 0;
+				padding: 0;
+				background: transparent;
+				overflow: hidden;
+				font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+				cursor: pointer;
+				user-select: none;
+				-webkit-app-region: drag;
+			}
+
+			#note-container {
+				padding: 16px;
+				background: rgba(255, 192, 203, 0.95);
+				border-radius: 12px;
+				box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+				max-width: 100%;
+				max-height: 100%;
+				box-sizing: border-box;
+				animation: fadeIn 0.3s ease-in;
+			}
+
+			#note-content {
+				color: #333;
+				font-size: 14px;
+				line-height: 1.5;
+				word-wrap: break-word;
+				margin: 0;
+			}
+
+			img {
+				max-width: 100%;
+				max-height: 120px;
+				border-radius: 8px;
+				display: block;
+				margin: 0 auto;
+			}
+
+			@keyframes fadeIn {
+				from {
+					opacity: 0;
+					transform: translateY(10px);
+				}
+				to {
+					opacity: 1;
+					transform: translateY(0);
+				}
+			}
+
+			/* Add a subtle hover effect */
+			#note-container:hover {
+				background: rgba(255, 182, 193, 0.98);
+				transform: scale(1.02);
+				transition: all 0.2s ease;
+			}
+		</style>
+	</head>
+	<body>
+		<div id="note-container">
+			<div id="note-content"></div>
+		</div>
+		<script>
+			// Initialize the note content
+			window.electron.onNoteContent((message) => {
+				const contentDiv = document.getElementById("note-content");
+
+				if (message.type === "text") {
+					contentDiv.innerText = message.content;
+				} else if (message.type === "drawing" || message.type === "sticker") {
+					const img = document.createElement("img");
+					img.src = message.content;
+					img.alt = message.type;
+					contentDiv.innerHTML = "";
+					contentDiv.appendChild(img);
+				}
+			});
+
+			// Close note on click
+			document.body.addEventListener("click", () => {
+				window.electron.closeNote();
+			});
+
+			// Add fade-out animation before closing
+			document.body.addEventListener("click", (e) => {
+				const container = document.getElementById("note-container");
+				container.style.opacity = "0";
+				container.style.transform = "translateY(10px)";
+				container.style.transition = "all 0.3s ease";
+
+				// Prevent multiple clicks
+				e.preventDefault();
+				e.stopPropagation();
+			});
+		</script>
+	</body>
+</html>

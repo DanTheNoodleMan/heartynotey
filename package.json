@@ -2,14 +2,16 @@
 	"name": "love-notes-app",
 	"version": "1.0.0",
 	"description": "A cute desktop app for couples to share notes",
-	"main": "/dist/main/main.js",
+	"main": "dist/main/main.js",
 	"scripts": {
 		"start": "electron .",
 		"dev": "concurrently \"npm run dev:electron\" \"npm run dev:server\"",
 		"dev:electron": "tsc -p tsconfig.electron.json && electron .",
 		"dev:server": "ts-node-dev --respawn --transpile-only server/src/index.ts",
-		"dev:renderer": "webpack serve --config webpack.config.js",
-		"build": "tsc -p tsconfig.electron.json && webpack --config webpack.config.js",
+		"dev:renderer": "webpack --config webpack.config.js",
+		"build": "npm run build:electron && npm run build:renderer",
+		"build:electron": "tsc -p tsconfig.electron.json",
+		"build:renderer": "webpack --config webpack.config.js",
 		"build:server": "tsc -p server/tsconfig.json"
 	},
 	"dependencies": {

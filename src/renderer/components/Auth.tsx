@@ -2,7 +2,7 @@
 import React, { useState } from "react";
 
 interface Props {
-	onAuthSuccess: (userId: string, partnerId: string) => void;
+	onAuthSuccess: (data: { userId: string; username: string, partnerId?: string; partnerUsername?: string }) => void;
 }
 
 const Auth: React.FC<Props> = ({ onAuthSuccess }) => {
@@ -45,13 +45,21 @@ const Auth: React.FC<Props> = ({ onAuthSuccess }) => {
 
 				const pairData = await pairResponse.json();
 				if (pairData.success) {
-					onAuthSuccess(data.userId, pairData.partnerId);
+					onAuthSuccess({
+						userId: data.userId,
+						username,
+						partnerId: pairData.partnerId,
+						partnerUsername: pairData.partnerUsername,
+					});
 				} else {
 					setError("Failed to pair with partner. Please check the username.");
 				}
 			} else {
-				// If no partner username, just complete auth with empty partnerId
-				onAuthSuccess(data.userId, "");
+				// If no partner username, just complete auth with empty partner info
+				onAuthSuccess({
+					userId: data.userId,
+					username,
+				});
 			}
 		} catch (err) {
 			setError("Connection error. Please try again.");

@@ -20,5 +20,8 @@ export interface UserCredentials {
 export interface AuthResponse {
 	success: boolean;
 	userId?: string;
+	username?: string;
 	error?: string;
+	partnerId?: any;
+	partnerUsername?: any;
 }

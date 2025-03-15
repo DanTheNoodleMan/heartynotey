@@ -4,10 +4,11 @@ import { Message } from "./types";
 export class WebSocketClient {
 	private socket: Socket;
 	private userId: string;
-	private partnerId: string;
+	private partnerId: string | null;
 	private messageHandler: (message: Message) => void;
+	private isConnected: boolean = false;
 
-	constructor(userId: string, partnerId: string, onMessage: (message: Message) => void) {
+	constructor(userId: string, partnerId: string | null, onMessage: (message: Message) => void) {
 		this.userId = userId;
 		this.partnerId = partnerId;
 		this.messageHandler = onMessage;
@@ -21,17 +22,35 @@ export class WebSocketClient {
 			this.socket.emit("register", this.userId, this.partnerId);
 		});
 
+		this.socket.on("partner-status", (partnerId: string | null, isOnline: boolean) => {
+			this.partnerId = partnerId;
+			this.isConnected = isOnline;
+			console.log(`Partner status: ${isOnline ? "online" : "offline"}. Partner ID: ${partnerId}`);
+		});
+
 		this.socket.on("disconnect", () => {
 			console.log("Disconnected from server");
+			this.isConnected = false;
 		});
 
 		this.socket.on("receive-message", (message: Message) => {
-			this.messageHandler(message);
+			if (message.senderId === this.partnerId) {
+				this.messageHandler(message);
+			}
 			console.log("Received message:", message);
 		});
 	}
 
-	public sendMessage(content: string, type: Message["type"] = "text") {
+	public isPartnerConnected(): boolean {
+		return this.isConnected && this.partnerId !== null;
+	}
+
+	public sendMessage(content: string, type: Message["type"] = "text"): boolean {
+		if (!this.partnerId || !this.isConnected) {
+			console.log("Cannot send message: No partner connected");
+			return false;
+		}
+
 		const message: Message = {
 			type,
 			content,
@@ -40,6 +59,7 @@ export class WebSocketClient {
 			timestamp: Date.now(),
 		};
 		this.socket.emit("send-message", message);
+		return true;
 	}
 
 	public disconnect() {
