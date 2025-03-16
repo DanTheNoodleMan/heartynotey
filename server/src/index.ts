@@ -11,6 +11,7 @@ const io = new Server(httpServer, {
 		origin: "*", // In production, set this to your app's domain
 		methods: ["GET", "POST"],
 	},
+	maxHttpBufferSize: 5e6, // 5MB max for uploads (drawings/stickers)
 });
 
 app.use(cors());

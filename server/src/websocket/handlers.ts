@@ -1,116 +1,175 @@
 import { Server, Socket } from 'socket.io';
 import { User, Room, Message } from './types';
 import { randomUUID } from 'crypto';
+import { logger } from '../utils/logger';
 
+// Store rooms in memory (in production, consider using Redis)
 const rooms = new Map<string, Room>();
 
 export function handleConnection(io: Server, socket: Socket) {
-  console.log(`Client connected: ${socket.id}`);
+  logger.info(`Client connected: ${socket.id}`);
 
+  // Create a new room
   socket.on('room:create', (data: { name: string }, callback) => {
-    console.log('Received room:create event:', data);
+    logger.info(`Room creation request from ${socket.id}, name: ${data.name}`);
+    
     try {
-      const roomId = randomUUID();
-      console.log('Generated room ID:', roomId);
+      const roomId = randomUUID().substring(0, 8); // Shorter, friendlier ID
       
-      const user: User = { id: socket.id, name: data.name, roomId };
-      console.log('Created user:', user);
+      const user: User = { 
+        id: socket.id, 
+        name: data.name, 
+        roomId 
+      };
       
       const room: Room = {
         id: roomId,
+        createdAt: Date.now(),
         participants: [user]
       };
-      console.log('Created room:', room);
       
+      // Store the room in memory
       rooms.set(roomId, room);
+      
+      // Join the socket to the room
       socket.join(roomId);
       
-      console.log('Sending success response');
+      // Send success response
       callback({ success: true, roomId });
       
-      // Emit room update to the creator immediately
-      socket.emit('room:updated', room);
-      console.log('Emitted room:updated event to creator');
+      // Emit room update to all participants
+      io.to(roomId).emit('room:updated', room);
+      
+      logger.info(`Room created: ${roomId} by user ${data.name} (${socket.id})`);
     } catch (error) {
-      console.error('Error creating room:', error);
+      logger.error('Error creating room:', error);
       callback({ success: false, error: 'Failed to create room' });
     }
   });
 
-  socket.on('room:join', async (data: { roomId: string; name: string }, callback) => {
-    console.log('Received room:join event:', data);
+  // Join an existing room
+  socket.on('room:join', (data: { roomId: string; name: string }, callback) => {
+    logger.info(`Join room request from ${socket.id}, room: ${data.roomId}, name: ${data.name}`);
+    
     try {
+      // Check if room exists
       const room = rooms.get(data.roomId);
       if (!room) {
-        console.log('Room not found:', data.roomId);
+        logger.warn(`Room not found: ${data.roomId}`);
         callback({ success: false, error: 'Room not found' });
         return;
       }
 
-      if (room.participants.length >= 2) {
-        console.log('Room is full:', data.roomId);
-        callback({ success: false, error: 'Room is full' });
+      // Check if user with same name already exists in the room
+      const nameExists = room.participants.some(p => p.name === data.name);
+      if (nameExists) {
+        logger.warn(`Name ${data.name} already taken in room ${data.roomId}`);
+        callback({ success: false, error: 'Name already taken in this room' });
         return;
       }
 
-      const user: User = { id: socket.id, name: data.name, roomId: data.roomId };
+      // Add user to room
+      const user: User = { 
+        id: socket.id, 
+        name: data.name, 
+        roomId: data.roomId 
+      };
+      
       room.participants.push(user);
       
+      // Join the socket to the room
       socket.join(data.roomId);
+      
+      // Send success response
       callback({ success: true });
       
-      // Notify all participants about the update
+      // Emit room update to all participants
       io.to(data.roomId).emit('room:updated', room);
-      console.log('User joined room:', { user, room });
+      
+      logger.info(`User ${data.name} (${socket.id}) joined room ${data.roomId}`);
     } catch (error) {
-      console.error('Error joining room:', error);
+      logger.error('Error joining room:', error);
       callback({ success: false, error: 'Failed to join room' });
     }
   });
 
-  socket.on('send:message', (message: Message) => {
-    let roomId: string | undefined;
+  // Handle reconnection to a room
+  socket.on('room:rejoin', (data: { roomId: string; name: string }) => {
+    logger.info(`Rejoin room request from ${socket.id}, room: ${data.roomId}, name: ${data.name}`);
     
-    // Find the room this socket belongs to
-    for (const [rid, room] of rooms.entries()) {
-      if (room.participants.some(p => p.id === socket.id)) {
-        roomId = rid;
-        break;
-      }
+    const room = rooms.get(data.roomId);
+    if (!room) {
+      logger.warn(`Cannot rejoin - Room not found: ${data.roomId}`);
+      return;
     }
-
-    if (roomId) {
-      console.log('Broadcasting message in room:', roomId, message);
-      io.to(roomId).emit('receive:message', message);
+    
+    // Update the user's socket ID if they exist in the room
+    const userIndex = room.participants.findIndex(p => p.name === data.name);
+    if (userIndex >= 0) {
+      room.participants[userIndex].id = socket.id;
+      
+      // Join the socket to the room
+      socket.join(data.roomId);
+      
+      // Emit room update to all participants
+      io.to(data.roomId).emit('room:updated', room);
+      
+      logger.info(`User ${data.name} (${socket.id}) rejoined room ${data.roomId}`);
     }
   });
 
-  socket.on('disconnect', () => {
-    console.log(`Client disconnected: ${socket.id}`);
+  // Handle sending messages in a room
+  socket.on('send:message', (message: Message, roomId: string) => {
+    const room = rooms.get(roomId);
+    if (!room) {
+      logger.warn(`Cannot send message - Room not found: ${roomId}`);
+      return;
+    }
     
-    // Find the room this socket belongs to
+    // Check if user is in the room
+    const userExists = room.participants.some(p => p.id === socket.id);
+    if (!userExists) {
+      logger.warn(`User ${socket.id} not in room ${roomId}`);
+      return;
+    }
+    
+    logger.info(`Message sent in room ${roomId} by ${message.senderName}`);
+    
+    // Broadcast message to all participants
+    io.to(roomId).emit('receive:message', message);
+  });
+
+  // Handle disconnections
+  socket.on('disconnect', () => {
+    logger.info(`Client disconnected: ${socket.id}`);
+    
+    // Find all rooms the user is in
     for (const [roomId, room] of rooms.entries()) {
-      const index = room.participants.findIndex(p => p.id === socket.id);
-      if (index !== -1) {
-        // Remove the participant but keep the room
-        room.participants.splice(index, 1);
-        console.log(`Removed participant from room ${roomId}. Remaining participants:`, room.participants.length);
+      const userIndex = room.participants.findIndex(p => p.id === socket.id);
+      if (userIndex >= 0) {
+        // Keep track of the user that left
+        const user = room.participants[userIndex];
         
-        // Only delete the room if it's been empty for a while (optional)
+        // Remove user from participants
+        room.participants.splice(userIndex, 1);
+        
+        logger.info(`User ${user.name} (${socket.id}) removed from room ${roomId}`);
+        
+        // If room is empty, schedule deletion after timeout
         if (room.participants.length === 0) {
-          // Set a timeout to delete the room after 1 hour of inactivity
+          logger.info(`Room ${roomId} is now empty, scheduling deletion`);
+          
           setTimeout(() => {
             const currentRoom = rooms.get(roomId);
             if (currentRoom && currentRoom.participants.length === 0) {
               rooms.delete(roomId);
-              console.log(`Deleted empty room ${roomId} after timeout`);
+              logger.info(`Deleted empty room ${roomId}`);
             }
-          }, 60 * 60 * 1000); // 1 hour
+          }, 3600000); // 1 hour
         } else {
-          // Notify remaining participants about the update
+          // Notify remaining participants
           io.to(roomId).emit('room:updated', room);
         }
-        break;
       }
     }
   });

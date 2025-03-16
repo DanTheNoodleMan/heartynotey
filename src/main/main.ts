@@ -1,92 +1,90 @@
-import { app, BrowserWindow, ipcMain } from "electron";
-import { screen } from "electron";
+// src/main/main.ts
+import { app, BrowserWindow } from "electron";
 import path from "path";
-import { Message } from "../shared/types";
+import { setupIpcHandlers, initializePaths, closeAllNoteWindows } from "./ipc";
 
-class MainWindow {
-	private window: BrowserWindow | null = null;
-	private noteWindows: BrowserWindow[] = [];
+class MainApplication {
+  private mainWindow: BrowserWindow | null = null;
 
-	constructor() {
-		app.on("ready", () => {
-			this.createMainWindow();
-			this.setupIpcHandlers();
-		});
+  constructor() {
+    this.initialize();
+  }
 
-		app.on("window-all-closed", () => {
-			if (process.platform !== "darwin") {
-				app.quit();
-			}
-		});
-	}
+  private initialize() {
+    // Handle app lifecycle events
+    app.on("ready", this.onReady.bind(this));
+    app.on("window-all-closed", this.onWindowAllClosed.bind(this));
+    app.on("activate", this.onActivate.bind(this));
+    app.on("quit", this.onQuit.bind(this));
+  }
 
-	private createMainWindow() {
-		this.window = new BrowserWindow({
-			width: 800, // Made wider to accommodate DevTools
-			height: 600,
-			webPreferences: {
-				nodeIntegration: true,
-				contextIsolation: true,
-				preload: path.join(__dirname, "preload.js"),
-			},
-		});
+  private onReady() {
+    // Create main window
+    this.createMainWindow();
+    
+    // Initialize paths for IPC
+    initializePaths(
+      path.join(__dirname, "preload.js"),
+      path.join(__dirname, "../renderer/note.html")
+    );
+    
+    // Setup IPC handlers
+    setupIpcHandlers();
+  }
 
-		if (process.env.NODE_ENV === "development") {
-			this.window.loadURL("http://localhost:8080");
-		} else {
-			this.window.loadFile(path.join(__dirname, "../renderer/index.html"));
-		}
-		this.window.webContents.openDevTools();
-	}
+  private createMainWindow() {
+    // Create the browser window
+    this.mainWindow = new BrowserWindow({
+      width: 600, 
+      height: 650,
+      minWidth: 300,
+      minHeight: 500,
+      webPreferences: {
+        nodeIntegration: false,
+        contextIsolation: true,
+        preload: path.join(__dirname, "preload.js"),
+      },
+      backgroundColor: "#FFF5F8", // Light pink background
+      title: "Love Notes",
+    });
 
-	private createNoteWindow(message: Message) {
-		const { width, height } = screen.getPrimaryDisplay().workAreaSize;
-		const noteWindow = new BrowserWindow({
-			width: 250,
-			height: 150,
-			frame: false,
-			transparent: true,
-			alwaysOnTop: true,
-			skipTaskbar: true,
-			x: Math.random() * (width - 250),
-			y: Math.random() * (height - 150),
-			webPreferences: {
-				nodeIntegration: true,
-				contextIsolation: true,
-				preload: path.join(__dirname, "preload.js"),
-			},
-		});
+    // Load the app
+    if (process.env.NODE_ENV === "development") {
+      // In development mode, load from webpack dev server
+      this.mainWindow.loadURL("http://localhost:8080");
+      this.mainWindow.webContents.openDevTools();
+    } else {
+      // In production mode, load from file
+      this.mainWindow.loadFile(path.join(__dirname, "../renderer/index.html"));
+    }
 
-		noteWindow.loadFile(path.join(__dirname, "../renderer/note.html"));
+    // Handle window close
+    this.mainWindow.on("closed", () => {
+      this.mainWindow = null;
+    });
+  }
 
-		// Send message data once window is ready
-		noteWindow.webContents.on("did-finish-load", () => {
-			noteWindow.webContents.send("set-note-content", message);
-		});
+  private onWindowAllClosed() {
+    // On macOS it is common for applications to stay active until the user quits
+    // explicitly with Cmd + Q
+    if (process.platform !== "darwin") {
+      app.quit();
+    }
+  }
 
-		// Auto-close note after delay based on content type
-		const timeout = message.type === "text" ? 5000 : 8000;
-		setTimeout(() => {
-			if (!noteWindow.isDestroyed()) {
-				noteWindow.close();
-			}
-		}, timeout);
+  private onActivate() {
+    // On macOS it's common to re-create a window when the dock icon is clicked
+    // and there are no other windows open
+    if (this.mainWindow === null) {
+      this.createMainWindow();
+    }
+  }
 
-		this.noteWindows.push(noteWindow);
-	}
-
-	private setupIpcHandlers() {
-		ipcMain.on("show-note", (_, message: Message) => {
-			this.createNoteWindow(message);
-		});
-
-		ipcMain.on("close-note", (event) => {
-			const win = BrowserWindow.fromWebContents(event.sender);
-			if (win) {
-				win.close();
-			}
-		});
-	}
+  private onQuit() {
+    // Clean up any resources
+    closeAllNoteWindows();
+  }
 }
 
-new MainWindow();
+// Initialize the application
+new MainApplication();

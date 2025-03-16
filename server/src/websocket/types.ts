@@ -1,28 +1,26 @@
+// src/shared/types.ts
 export interface User {
-	id?: string;
+	id: string; // Socket ID
 	name: string;
 	roomId: string;
-}
-
-export interface Room {
+  }
+  
+  export interface Room {
 	id: string;
+	createdAt: number; // Timestamp
 	participants: User[];
-}
-
-export interface Message {
+  }
+  
+  export interface Message {
 	type: "text" | "sticker" | "drawing";
 	content: string;
 	senderName: string;
 	timestamp: number;
-}
-
-export interface RoomCreateResponse {
+  }
+  
+  // Types used for WebSocket responses
+  export interface RoomResponse {
 	success: boolean;
 	roomId?: string;
 	error?: string;
-}
-
-export interface RoomJoinResponse {
-	success: boolean;
-	error?: string;
-}
+  }
