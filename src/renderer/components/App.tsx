@@ -1,69 +1,64 @@
-// src/renderer/components/App.tsx
 import React, { useState, useEffect } from "react";
 import { WebSocketClient } from "../utils/websocket";
-import { Message } from "../utils/types";
-import Auth from "./Auth";
-import PartnerForm from "./PartnerForm";
+import { Room } from "../../shared/types";
+import RoomJoin from "./RoomJoin";
 import MessageSender from "./MessageSender";
 import DrawingCanvas from "./DrawingCanvas";
+import RoomInfo from "./RoomInfo";
 
 const App: React.FC = () => {
-	const [wsClient, setWsClient] = useState<WebSocketClient | null>(null);
+	const [wsClient, setWsClient] = useState<WebSocketClient>(() => new WebSocketClient());
 	const [activeTab, setActiveTab] = useState<"message" | "drawing">("message");
-	const [isAuthenticated, setIsAuthenticated] = useState(false);
-	const [userId, setUserId] = useState<string | null>(null);
-	const [username, setUsername] = useState<string | null>(null);
-	const [partnerId, setPartnerId] = useState<string | null>(null);
-	const [partnerUsername, setPartnerUsername] = useState<string | null>(null);
-	const [needsPartner, setNeedsPartner] = useState(false);
+	const [roomId, setRoomId] = useState<string | null>(null);
+	const [room, setRoom] = useState<Room | null>(null);
+	const [connected, setConnected] = useState(false);
 
-	const handleIncomingMessage = (message: Message) => {
-		if (message.senderId === partnerId) {
+	useEffect(() => {
+		const handleConnect = () => {
+			console.log("WebSocket connected");
+			setConnected(true);
+		};
+
+		const handleDisconnect = () => {
+			console.log("WebSocket disconnected");
+			setConnected(false);
+		};
+
+		const handleRoomUpdate = (updatedRoom: Room) => {
+			console.log("Room updated:", updatedRoom);
+			setRoom(updatedRoom);
+		};
+
+		wsClient.socket.on("connect", handleConnect);
+		wsClient.socket.on("disconnect", handleDisconnect);
+		wsClient.socket.on("room:updated", handleRoomUpdate);
+
+		return () => {
+			wsClient.socket.off("connect", handleConnect);
+			wsClient.socket.off("disconnect", handleDisconnect);
+			wsClient.socket.off("room:updated", handleRoomUpdate);
+		};
+	}, [wsClient]);
+
+	const handleJoinSuccess = (client: WebSocketClient) => {
+		console.log("Join/Create success callback triggered");
+		const newRoomId = client.getRoomId();
+		console.log("Setting room ID:", newRoomId);
+		setRoomId(newRoomId);
+
+		client.onMessage((message) => {
+			console.log("Received message in App:", message);
 			window.electron.showNote(message);
-		}
+		});
 	};
 
-	const handleAuthSuccess = (data: { userId: string; username: string; partnerId?: string; partnerUsername?: string }) => {
-		setUserId(data.userId);
-		setUsername(data.username);
-		setPartnerId(data.partnerId || null);
-		setPartnerUsername(data.partnerUsername || null);
-		setIsAuthenticated(true);
-		setNeedsPartner(!data.partnerId);
-
-		// Initialize WebSocket connection after authentication
-		const client = new WebSocketClient(data.userId, data.partnerId || null, handleIncomingMessage);
-		setWsClient(client);
-	};
-
-	const handlePairSuccess = (data: { partnerId: string; partnerUsername: string }) => {
-		setPartnerId(data.partnerId);
-		setPartnerUsername(data.partnerUsername);
-		setNeedsPartner(false);
-
-		// Reinitialize WebSocket connection with partner
-		if (wsClient) {
-			wsClient.disconnect();
-		}
-		const client = new WebSocketClient(userId!, data.partnerId, handleIncomingMessage);
-		setWsClient(client);
-	};
-
-	if (!isAuthenticated) {
-		return <Auth onAuthSuccess={handleAuthSuccess} />;
-	}
-
-	if (needsPartner && userId && username) {
-		return <PartnerForm userId={userId} username={username} onPairSuccess={handlePairSuccess} />;
+	if (!wsClient || !roomId) {
+		return <RoomJoin onJoinSuccess={handleJoinSuccess} />;
 	}
 
 	return (
 		<div className="flex flex-col h-screen bg-pink-50">
-			<div className="bg-white p-4 shadow-sm">
-				<p className="text-sm text-gray-600">
-					Connected with: <span className="font-medium">{partnerUsername}</span>
-				</p>
-			</div>
+			<RoomInfo roomId={roomId} room={room} />
 
 			<div className="flex-1 p-4">
 				{activeTab === "message" && <MessageSender wsClient={wsClient} />}
@@ -84,6 +79,11 @@ const App: React.FC = () => {
 					Draw
 				</button>
 			</div>
+			{!connected && (
+				<div className="absolute bottom-0 left-0 right-0 bg-red-100 text-red-700 px-4 py-2 text-sm">
+					Disconnected from server. Attempting to reconnect...
+				</div>
+			)}
 		</div>
 	);
 };

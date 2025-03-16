@@ -1,7 +1,7 @@
 import { app, BrowserWindow, ipcMain } from "electron";
 import { screen } from "electron";
 import path from "path";
-import { Message } from '../shared/types';
+import { Message } from "../shared/types";
 
 class MainWindow {
 	private window: BrowserWindow | null = null;
@@ -22,7 +22,7 @@ class MainWindow {
 
 	private createMainWindow() {
 		this.window = new BrowserWindow({
-			width: 400,
+			width: 800, // Made wider to accommodate DevTools
 			height: 600,
 			webPreferences: {
 				nodeIntegration: true,
@@ -33,10 +33,10 @@ class MainWindow {
 
 		if (process.env.NODE_ENV === "development") {
 			this.window.loadURL("http://localhost:8080");
-			this.window.webContents.openDevTools();
 		} else {
 			this.window.loadFile(path.join(__dirname, "../renderer/index.html"));
 		}
+		this.window.webContents.openDevTools();
 	}
 
 	private createNoteWindow(message: Message) {

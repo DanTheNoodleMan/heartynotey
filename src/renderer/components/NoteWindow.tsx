@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from "react";
-import { Message } from "../utils/types";
+import { Message } from "../../shared/types";
 
 const NoteWindow: React.FC = () => {
 	const [message, setMessage] = useState<Message | null>(null);

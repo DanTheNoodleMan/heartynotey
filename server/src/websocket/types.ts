@@ -1,27 +1,28 @@
 export interface User {
+	id?: string;
+	name: string;
+	roomId: string;
+}
+
+export interface Room {
 	id: string;
-	partnerId?: string;
-	socketId: string;
+	participants: User[];
 }
 
 export interface Message {
 	type: "text" | "sticker" | "drawing";
 	content: string;
-	senderId: string;
-	receiverId: string;
+	senderName: string;
 	timestamp: number;
 }
 
-export interface UserCredentials {
-	username: string;
-	password: string;
+export interface RoomCreateResponse {
+	success: boolean;
+	roomId?: string;
+	error?: string;
 }
 
-export interface AuthResponse {
+export interface RoomJoinResponse {
 	success: boolean;
-	userId?: string;
-	username?: string;
 	error?: string;
-	partnerId?: any;
-	partnerUsername?: any;
 }
