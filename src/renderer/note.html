@@ -5,7 +5,6 @@
 		<title>Love Note</title>
 		<link rel="preconnect" href="https://fonts.googleapis.com" />
 		<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-		<link rel="stylesheet" href="styles/main.css" />
 		<link href="https://fonts.googleapis.com/css2?family=Quicksand:wght@400;500;600&display=swap" rel="stylesheet" />
 		<style>
 			html {
@@ -27,86 +26,207 @@
 				display: flex;
 				align-items: center;
 				justify-content: center;
-				padding: 16px;
-				background: rgba(255, 192, 203, 0.7);
-				backdrop-filter: blur(8px);
-				-webkit-backdrop-filter: blur(8px);
-				border: 1px solid rgba(255, 255, 255, 0.3);
-				border-radius: 16px;
-				box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1), inset 0 0 0 1px rgba(255, 255, 255, 0.2);
+				padding: 20px;
+				background: rgba(255, 182, 193, 0.85);
+				backdrop-filter: blur(12px);
+				-webkit-backdrop-filter: blur(12px);
+				border: 2px solid rgba(255, 255, 255, 0.5);
+				border-radius: 24px;
+				box-shadow: 
+					0 8px 32px rgba(255, 105, 180, 0.15),
+					inset 0 2px 4px rgba(255, 255, 255, 0.4),
+					0 -2px 4px rgba(255, 255, 255, 0.2);
 				width: 100%;
 				height: 100%;
 				box-sizing: border-box;
-				animation: fadeIn 0.3s ease-in;
+				animation: floatIn 0.6s cubic-bezier(0.18, 0.89, 0.32, 1.28);
 				transform-origin: center;
+				position: relative;
+				overflow: hidden;
+			}
+
+			#note-container::before {
+				content: '';
+				position: absolute;
+				top: -50%;
+				left: -50%;
+				width: 200%;
+				height: 200%;
+				background: radial-gradient(
+					circle at center,
+					rgba(255, 255, 255, 0.2) 0%,
+					transparent 70%
+				);
+			}
+
+			#note-container::after {
+				content: '';
+				position: absolute;
+				top: 0;
+				left: 0;
+				right: 0;
+				bottom: 0;
+				background: linear-gradient(
+					135deg,
+					rgba(255, 255, 255, 0.2) 0%,
+					transparent 100%
+				);
+				border-radius: 24px;
 			}
 
 			#note-content {
 				color: #4a154b;
-				font-size: 16px;
-				line-height: 1.5;
+				font-size: 18px;
+				line-height: 1.6;
 				word-wrap: break-word;
 				margin: 0;
 				font-weight: 500;
 				letter-spacing: 0.3px;
+				position: relative;
+				z-index: 2;
+				text-shadow: 0 1px 2px rgba(255, 255, 255, 0.3);
+			}
+
+			.hearts {
+				position: absolute;
+				pointer-events: none;
+				animation: float 3s ease-in-out infinite;
 			}
 
 			img {
 				max-width: 100%;
-				border-radius: 12px;
+				border-radius: 16px;
 				display: block;
 				margin: 0 auto;
-				box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+				box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+				border: 2px solid rgba(255, 255, 255, 0.3);
 			}
 
-			@keyframes fadeIn {
-				from {
+			@keyframes floatIn {
+				0% {
 					opacity: 0;
-					transform: translateY(10px) scale(0.95);
+					transform: translateY(20px) scale(0.9) rotate(-2deg);
 				}
-				to {
+				70% {
+					transform: translateY(-5px) scale(1.02) rotate(1deg);
+				}
+				100% {
 					opacity: 1;
-					transform: translateY(0) scale(1);
+					transform: translateY(0) scale(1) rotate(0);
 				}
 			}
 
 			@keyframes fadeOut {
-				from {
+				0% {
 					opacity: 1;
-					transform: scale(1);
+					transform: scale(1) rotate(0);
 				}
-				to {
+				100% {
 					opacity: 0;
-					transform: scale(0.95);
+					transform: scale(0.9) rotate(2deg);
 				}
+			}
+
+			@keyframes float {
+				0%, 100% {
+					transform: translateY(0) rotate(0);
+				}
+				50% {
+					transform: translateY(-15px) rotate(5deg);
+				}
+			}
+
+			@keyframes shimmer {
+				0% {
+					transform: rotate(0deg);
+				}
+				100% {
+					transform: rotate(360deg);
+				}
+			}
+
+			#note-container:hover {
+				transform: scale(1.02) translateY(-5px);
+				background: rgba(255, 192, 203, 0.9);
+				box-shadow: 
+					0 12px 36px rgba(255, 105, 180, 0.2),
+					inset 0 2px 8px rgba(255, 255, 255, 0.5),
+					0 -2px 6px rgba(255, 255, 255, 0.3);
+				transition: all 0.3s cubic-bezier(0.18, 0.89, 0.32, 1.28);
 			}
 
 			.fade-out {
-				animation: fadeOut 0.3s ease-out forwards;
+				animation: fadeOut 0.4s cubic-bezier(0.4, 0, 0.2, 1) forwards;
 			}
 
-			/* Hover effect */
-			#note-container:hover {
-				background: rgba(255, 182, 193, 0.8);
-				transform: scale(1.02) translateY(-2px);
-				transition: all 0.2s ease;
-				box-shadow: 0 8px 16px rgba(0, 0, 0, 0.12), inset 0 0 0 1px rgba(255, 255, 255, 0.3);
+			/* Decorative elements */
+			.heart {
+				position: absolute;
+				width: 20px;
+				height: 20px;
+				background: rgba(255, 255, 255, 0.4);
+				clip-path: path('M10 3.22c-0.96-1.71-2.67-2.77-4.61-2.77-2.97 0-5.39 2.42-5.39 5.39 0 3.38 3.53 6.14 8.89 10.69l1.11 1.02 1.11-1.02c5.36-4.55 8.89-7.31 8.89-10.69 0-2.97-2.42-5.39-5.39-5.39-1.94 0-3.65 1.06-4.61 2.77z');
+				opacity: 0.6;
+			}
+
+			.sparkle {
+				position: absolute;
+				width: 8px;
+				height: 8px;
+				background: rgba(255, 255, 255, 0.8);
+				clip-path: polygon(50% 0%, 61% 35%, 98% 35%, 68% 57%, 79% 91%, 50% 70%, 21% 91%, 32% 57%, 2% 35%, 39% 35%);
+				animation: sparkle 2s ease-in-out infinite;
+			}
+
+			@keyframes sparkle {
+				0%, 100% {
+					transform: scale(1) rotate(0deg);
+					opacity: 0.8;
+				}
+				50% {
+					transform: scale(1.2) rotate(180deg);
+					opacity: 0.4;
+				}
 			}
 		</style>
 	</head>
 	<body>
-		<div id="note-container" class="regular-text">
+		<div id="note-container">
 			<div id="note-content"></div>
 		</div>
 		<script>
-			// Initialize the note content
+			// Generate decorative elements
+			function addDecorations() {
+				const container = document.getElementById('note-container');
+				
+				// Add hearts
+				for (let i = 0; i < 6; i++) {
+					const heart = document.createElement('div');
+					heart.className = 'heart';
+					heart.style.top = Math.random() * 100 + '%';
+					heart.style.left = Math.random() * 100 + '%';
+					heart.style.animation = `float ${2 + Math.random()}s ease-in-out infinite`;
+					heart.style.animationDelay = `${Math.random()}s`;
+					container.appendChild(heart);
+				}
+
+				// Add sparkles
+				for (let i = 0; i < 8; i++) {
+					const sparkle = document.createElement('div');
+					sparkle.className = 'sparkle';
+					sparkle.style.top = Math.random() * 100 + '%';
+					sparkle.style.left = Math.random() * 100 + '%';
+					sparkle.style.animationDelay = `${Math.random()}s`;
+					container.appendChild(sparkle);
+				}
+			}
+
 			window.electron.onNoteContent((message) => {
 				const contentDiv = document.getElementById("note-content");
 				const container = document.getElementById("note-container");
 
 				if (message.type === "text") {
 					contentDiv.innerText = message.content;
-					// Adjust container width based on content
 					container.style.maxWidth = "300px";
 					container.style.minWidth = "120px";
 				} else if (message.type === "drawing" || message.type === "sticker") {
@@ -116,16 +236,18 @@
 					contentDiv.innerHTML = "";
 					contentDiv.appendChild(img);
 				}
+
+				// Add decorative elements after content is set
+				addDecorations();
 			});
 
-			// Close note on click with animation
 			document.body.addEventListener("click", () => {
 				const container = document.getElementById("note-container");
 				container.classList.add("fade-out");
 
 				setTimeout(() => {
 					window.electron.closeNote();
-				}, 300);
+				}, 400);
 			});
 		</script>
 	</body>
