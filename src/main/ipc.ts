@@ -29,14 +29,26 @@ let noteWindows: BrowserWindow[] = [];
 
 export function createNoteWindow(message: Message) {
 	// Get dimensions of the primary display
-	const { width, height } = screen.getPrimaryDisplay().workAreaSize;
-
-	// Create coordinates - keep away from edges
-	const x = Math.random() * (width - 300) + 50;
-	const y = Math.random() * (height - 200) + 50;
-
+	const primaryDisplay = screen.getPrimaryDisplay();
+	const { width, height } = primaryDisplay.workAreaSize;
+	
+	// Calculate safe margins
+	const safeMarginX = width * 0.1; // 10% of screen width
+	const safeMarginY = height * 0.1; // 10% of screen height
+	
 	// Size based on content type
-	const size = message.type === "text" ? { width: 250, height: 100 } : { width: 250, height: 250 };
+	const size = message.type === "text" 
+		? { width: 250, height: 100 } 
+		: { width: 250, height: 250 };
+	
+	// Create coordinates - keep away from edges with improved margin handling
+	const maxX = width - size.width - safeMarginX;
+	const maxY = height - size.height - safeMarginY;
+	
+	const x = Math.floor(safeMarginX + Math.random() * maxX);
+	const y = Math.floor(safeMarginY + Math.random() * maxY);
+	
+	console.log(`Creating note at position: (${x}, ${y}) with size: ${size.width}x${size.height}`);
 
 	const noteWindow = new BrowserWindow({
 		...size,
@@ -63,6 +75,11 @@ export function createNoteWindow(message: Message) {
 
 		// Show with fade-in effect (the CSS animation will handle this)
 		noteWindow.show();
+		
+		// Ensure window is visible and on top
+		noteWindow.setAlwaysOnTop(true, "floating");
+		noteWindow.setVisibleOnAllWorkspaces(true);
+		noteWindow.setFullScreenable(false);
 	});
 
 	// Auto-close note after delay based on content type

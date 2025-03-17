@@ -92,9 +92,13 @@ const App: React.FC = () => {
 
 			client.onMessage((message) => {
 				console.log("Received message:", message);
+
 				// Only show notes from other users
 				if (message.senderName !== client.socket.id) {
+					console.log("Showing note from other user:", message);
 					window.electron.showNote(message);
+				} else {
+					console.log("Ignoring own message");
 				}
 			});
 		} else {

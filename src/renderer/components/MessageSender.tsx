@@ -17,8 +17,13 @@ const MessageSender: React.FC<Props> = ({ wsClient }) => {
 	const handleSend = () => {
 		if (!message.trim() || !wsClient) return;
 
-		wsClient.sendMessage(message, "text");
-		
+		const success = wsClient.sendMessage(message, "text");
+
+		if (success) {
+			// Optional: Show a confirmation that message was sent
+			console.log("Message sent successfully");
+			setMessage(""); // Clear the input
+		}
 	};
 
 	return (
