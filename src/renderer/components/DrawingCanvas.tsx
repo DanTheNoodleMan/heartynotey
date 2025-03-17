@@ -101,13 +101,7 @@ const DrawingCanvas: React.FC<Props> = ({ wsClient }) => {
     const dataUrl = canvas.toDataURL("image/png");
     wsClient.sendMessage(dataUrl, "drawing");
 
-    window.electron.showNote({
-      type: "drawing",
-      content: dataUrl,
-      senderId: "user1",
-      receiverId: "user2",
-      timestamp: Date.now(),
-    });
+   
 
     clearCanvas();
   };
@@ -119,7 +113,7 @@ const DrawingCanvas: React.FC<Props> = ({ wsClient }) => {
           {colors.map((c) => (
             <button
               key={c}
-              className={`w-8 h-8 rounded-full ${color === c ? "ring-2 ring-offset-2 ring-pink-500" : ""}`}
+              className={`w-8 h-8 rounded-full cursor-pointer ${color === c ? "ring-2 ring-offset-2 ring-pink-500" : ""}`}
               style={{ backgroundColor: c }}
               onClick={() => {
                 setColor(c);
@@ -160,10 +154,10 @@ const DrawingCanvas: React.FC<Props> = ({ wsClient }) => {
       />
 
       <div className="flex gap-2">
-        <button onClick={clearCanvas} className="flex-1 bg-gray-200 text-gray-800 px-4 py-2 rounded-lg hover:bg-gray-300">
+        <button onClick={clearCanvas} className="flex-1 bg-gray-200 text-gray-800 px-4 py-2 rounded-lg hover:bg-gray-300 cursor-pointer">
           Clear
         </button>
-        <button onClick={sendDrawing} className="flex-1 bg-pink-500 text-white px-4 py-2 rounded-lg hover:bg-pink-600">
+        <button onClick={sendDrawing} className="flex-1 bg-pink-500 text-white px-4 py-2 rounded-lg hover:bg-pink-600 cursor-pointer">
           Send Drawing
         </button>
       </div>

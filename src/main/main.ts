@@ -48,6 +48,7 @@ class MainApplication {
       title: "Love Notes",
     });
 
+
     // Load the app
     if (process.env.NODE_ENV === "development") {
       // In development mode, load from webpack dev server

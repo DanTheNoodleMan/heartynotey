@@ -24,6 +24,13 @@ module.exports = {
 				test: /\.css$/,
 				use: ["style-loader", "css-loader", "postcss-loader"],
 			},
+			{
+				test: /\.(woff|woff2|eot|ttf|otf)$/i,
+				type: "asset/resource",
+				generator: {
+					filename: "fonts/PlaywriteHU.ttf",
+				},
+			},
 		],
 	},
 	resolve: {

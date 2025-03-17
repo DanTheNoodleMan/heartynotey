@@ -92,7 +92,10 @@ const App: React.FC = () => {
 
 			client.onMessage((message) => {
 				console.log("Received message:", message);
-				window.electron.showNote(message);
+				// Only show notes from other users
+				if (message.senderName !== client.socket.id) {
+					window.electron.showNote(message);
+				}
 			});
 		} else {
 			setError("Failed to get room ID");
@@ -128,14 +131,14 @@ const App: React.FC = () => {
 					<RoomInfo roomId={roomId} room={room} />
 					<button
 						onClick={handleLeaveRoom}
-						className="px-4 py-2 bg-pink-100 text-pink-700 rounded hover:bg-pink-200 transition-colors"
+						className="px-4 py-2 bg-pink-100 text-pink-700 rounded hover:bg-pink-200 transition-colors cursor-pointer"
 					>
 						Leave Room
 					</button>
 					<div className="flex justify-center gap-4 p-2">
 						<button
 							onClick={() => setActiveTab("message")}
-							className={`flex items-center gap-2 px-6 py-3 rounded-full transition-all duration-300
+							className={`flex items-center gap-2 px-6 py-3 rounded-full transition-all duration-300 cursor-pointer
                 ${
 					activeTab === "message"
 						? "bg-pink-500 text-white shadow-md transform scale-105"
@@ -148,7 +151,7 @@ const App: React.FC = () => {
 
 						<button
 							onClick={() => setActiveTab("drawing")}
-							className={`flex items-center gap-2 px-6 py-3 rounded-full transition-all duration-300
+							className={`flex items-center gap-2 px-6 py-3 rounded-full transition-all duration-300 cursor-pointer
                 ${
 					activeTab === "drawing"
 						? "bg-pink-500 text-white shadow-md transform scale-105"

@@ -34,7 +34,7 @@ const RoomInfo: React.FC<Props> = ({ roomId, room }) => {
 						</p>
 						<button
 							onClick={copyRoomId}
-							className={`text-xs px-2 py-1 rounded ${
+							className={`text-xs px-2 py-1 rounded cursor-pointer ${
 								copied ? "bg-green-100 text-green-700" : "bg-pink-100 text-pink-600 hover:bg-pink-200"
 							} transition-colors`}
 						>

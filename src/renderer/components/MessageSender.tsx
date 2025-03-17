@@ -18,14 +18,7 @@ const MessageSender: React.FC<Props> = ({ wsClient }) => {
 		if (!message.trim() || !wsClient) return;
 
 		wsClient.sendMessage(message, "text");
-		window.electron.showNote({
-			type: "text",
-			content: message,
-			senderId: "user1",
-			receiverId: "user2",
-			timestamp: Date.now(),
-		});
-		setMessage("");
+		
 	};
 
 	return (
@@ -46,7 +39,7 @@ const MessageSender: React.FC<Props> = ({ wsClient }) => {
 				className="w-full bg-button-gradient text-white py-3 px-6 rounded-xl
                  flex items-center justify-center gap-2 transform hover:scale-105
                  transition-all duration-300 font-medium shadow-md hover:shadow-lg
-                 disabled:opacity-50 disabled:cursor-not-allowed"
+                 disabled:opacity-50 disabled:cursor-not-allowed cursor-pointer"
 				disabled={!message.trim()}
 			>
 				<HeartIcon />

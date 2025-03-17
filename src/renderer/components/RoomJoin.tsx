@@ -97,7 +97,7 @@ const RoomJoin: React.FC<Props> = ({ onJoinSuccess, wsClient, error: propError }
 
 				<button
 					type="submit"
-					className={`w-full bg-pink-500 text-white py-3 rounded-lg hover:bg-pink-600 transition-colors mb-4 font-medium ${
+					className={`w-full bg-pink-500 text-white py-3 rounded-lg hover:bg-pink-600 transition-colors mb-4 font-medium cursor-pointer ${
 						isLoading ? "opacity-50 cursor-not-allowed" : ""
 					}`}
 					disabled={isLoading}
@@ -108,7 +108,7 @@ const RoomJoin: React.FC<Props> = ({ onJoinSuccess, wsClient, error: propError }
 				<button
 					type="button"
 					onClick={() => setIsCreating(!isCreating)}
-					className="w-full text-pink-500 hover:text-pink-600 transition-colors text-sm"
+					className="w-full text-pink-500 hover:text-pink-600 transition-colors text-sm cursor-pointer"
 					disabled={isLoading}
 				>
 					{isCreating ? "Have a room ID? Join an existing room" : "Create a new room instead"}

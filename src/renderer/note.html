@@ -3,75 +3,112 @@
 	<head>
 		<meta charset="UTF-8" />
 		<title>Love Note</title>
+		<link rel="preconnect" href="https://fonts.googleapis.com" />
+		<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+		<link rel="stylesheet" href="styles/main.css" />
+		<link href="https://fonts.googleapis.com/css2?family=Quicksand:wght@400;500;600&display=swap" rel="stylesheet" />
 		<style>
+			html {
+				height: 100%;
+			}
 			body {
 				margin: 0;
 				padding: 0;
+				height: 100%;
 				background: transparent;
 				overflow: hidden;
-				font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+				font-family: "PlaywriteHU", "Quicksand", sans-serif;
 				cursor: pointer;
 				user-select: none;
 				-webkit-app-region: drag;
 			}
 
 			#note-container {
+				display: flex;
+				align-items: center;
+				justify-content: center;
 				padding: 16px;
-				background: rgba(255, 192, 203, 0.95);
-				border-radius: 12px;
-				box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
-				max-width: 100%;
-				max-height: 100%;
+				background: rgba(255, 192, 203, 0.7);
+				backdrop-filter: blur(8px);
+				-webkit-backdrop-filter: blur(8px);
+				border: 1px solid rgba(255, 255, 255, 0.3);
+				border-radius: 16px;
+				box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1), inset 0 0 0 1px rgba(255, 255, 255, 0.2);
+				width: 100%;
+				height: 100%;
 				box-sizing: border-box;
 				animation: fadeIn 0.3s ease-in;
+				transform-origin: center;
 			}
 
 			#note-content {
-				color: #333;
-				font-size: 14px;
+				color: #4a154b;
+				font-size: 16px;
 				line-height: 1.5;
 				word-wrap: break-word;
 				margin: 0;
+				font-weight: 500;
+				letter-spacing: 0.3px;
 			}
 
 			img {
 				max-width: 100%;
-				max-height: 120px;
-				border-radius: 8px;
+				border-radius: 12px;
 				display: block;
 				margin: 0 auto;
+				box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
 			}
 
 			@keyframes fadeIn {
 				from {
 					opacity: 0;
-					transform: translateY(10px);
+					transform: translateY(10px) scale(0.95);
 				}
 				to {
 					opacity: 1;
-					transform: translateY(0);
+					transform: translateY(0) scale(1);
 				}
 			}
 
-			/* Add a subtle hover effect */
+			@keyframes fadeOut {
+				from {
+					opacity: 1;
+					transform: scale(1);
+				}
+				to {
+					opacity: 0;
+					transform: scale(0.95);
+				}
+			}
+
+			.fade-out {
+				animation: fadeOut 0.3s ease-out forwards;
+			}
+
+			/* Hover effect */
 			#note-container:hover {
-				background: rgba(255, 182, 193, 0.98);
-				transform: scale(1.02);
+				background: rgba(255, 182, 193, 0.8);
+				transform: scale(1.02) translateY(-2px);
 				transition: all 0.2s ease;
+				box-shadow: 0 8px 16px rgba(0, 0, 0, 0.12), inset 0 0 0 1px rgba(255, 255, 255, 0.3);
 			}
 		</style>
 	</head>
 	<body>
-		<div id="note-container">
+		<div id="note-container" class="regular-text">
 			<div id="note-content"></div>
 		</div>
 		<script>
 			// Initialize the note content
 			window.electron.onNoteContent((message) => {
 				const contentDiv = document.getElementById("note-content");
+				const container = document.getElementById("note-container");
 
 				if (message.type === "text") {
 					contentDiv.innerText = message.content;
+					// Adjust container width based on content
+					container.style.maxWidth = "300px";
+					container.style.minWidth = "120px";
 				} else if (message.type === "drawing" || message.type === "sticker") {
 					const img = document.createElement("img");
 					img.src = message.content;
@@ -81,21 +118,14 @@
 				}
 			});
 
-			// Close note on click
+			// Close note on click with animation
 			document.body.addEventListener("click", () => {
-				window.electron.closeNote();
-			});
-
-			// Add fade-out animation before closing
-			document.body.addEventListener("click", (e) => {
 				const container = document.getElementById("note-container");
-				container.style.opacity = "0";
-				container.style.transform = "translateY(10px)";
-				container.style.transition = "all 0.3s ease";
+				container.classList.add("fade-out");
 
-				// Prevent multiple clicks
-				e.preventDefault();
-				e.stopPropagation();
+				setTimeout(() => {
+					window.electron.closeNote();
+				}, 300);
 			});
 		</script>
 	</body>

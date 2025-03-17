@@ -36,7 +36,7 @@ export function createNoteWindow(message: Message) {
 	const y = Math.random() * (height - 200) + 50;
 
 	// Size based on content type
-	const size = message.type === "text" ? { width: 250, height: 150 } : { width: 350, height: 350 };
+	const size = message.type === "text" ? { width: 250, height: 100 } : { width: 250, height: 250 };
 
 	const noteWindow = new BrowserWindow({
 		...size,
