@@ -5,6 +5,8 @@ import RoomJoin from "./RoomJoin";
 import MessageSender from "./MessageSender";
 import DrawingCanvas from "./DrawingCanvas";
 import RoomInfo from "./RoomInfo";
+import AppSettings from "./AppSettings";
+import ThemeService from "../utils/themeService";
 
 const MessageIcon = () => (
 	<svg width="24" height="24" viewBox="0 0 24 24" fill="currentColor">
@@ -20,11 +22,13 @@ const DrawIcon = () => (
 
 const App: React.FC = () => {
 	const [wsClient, setWsClient] = useState<WebSocketClient | null>(null);
-	const [activeTab, setActiveTab] = useState<"message" | "drawing">("message");
+	const [activeTab, setActiveTab] = useState<"message" | "drawing" | "sticker">("message");
 	const [roomId, setRoomId] = useState<string | null>(null);
 	const [room, setRoom] = useState<Room | null>(null);
 	const [connected, setConnected] = useState(false);
 	const [error, setError] = useState<string | null>(null);
+
+	const themeService = ThemeService.getInstance();
 
 	useEffect(() => {
 		// Create WebSocket client
@@ -96,7 +100,8 @@ const App: React.FC = () => {
 				// Only show notes from other users
 				if (message.senderName !== client.socket.id) {
 					console.log("Showing note from other user:", message);
-					window.electron.showNote(message);
+					const themedMessage = themeService.applyThemeToMessage(message);
+					window.electron.showNote(themedMessage);
 				} else {
 					console.log("Ignoring own message");
 				}
@@ -133,6 +138,8 @@ const App: React.FC = () => {
 			<div className="max-w-3xl mx-auto p-6">
 				<div className="bg-white/80 backdrop-blur-sm rounded-3xl shadow-love p-6 space-y-6">
 					<RoomInfo roomId={roomId} room={room} />
+					<AppSettings />
+
 					<button
 						onClick={handleLeaveRoom}
 						className="px-4 py-2 bg-pink-100 text-pink-700 rounded hover:bg-pink-200 transition-colors cursor-pointer"
