@@ -27,15 +27,10 @@
 				align-items: center;
 				justify-content: center;
 				padding: 20px;
-				background: rgba(255, 182, 193, 0.85);
 				backdrop-filter: blur(12px);
 				-webkit-backdrop-filter: blur(12px);
-				border: 2px solid rgba(255, 255, 255, 0.5);
 				border-radius: 24px;
-				box-shadow: 
-					0 8px 32px rgba(255, 105, 180, 0.15),
-					inset 0 2px 4px rgba(255, 255, 255, 0.4),
-					0 -2px 4px rgba(255, 255, 255, 0.2);
+				box-shadow: 0 8px 32px rgba(0, 0, 0, 0.15);
 				width: 100%;
 				height: 100%;
 				box-sizing: border-box;
@@ -46,31 +41,23 @@
 			}
 
 			#note-container::before {
-				content: '';
+				content: "";
 				position: absolute;
 				top: -50%;
 				left: -50%;
 				width: 200%;
 				height: 200%;
-				background: radial-gradient(
-					circle at center,
-					rgba(255, 255, 255, 0.2) 0%,
-					transparent 70%
-				);
+				background: radial-gradient(circle at center, rgba(255, 255, 255, 0.2) 0%, transparent 70%);
 			}
 
 			#note-container::after {
-				content: '';
+				content: "";
 				position: absolute;
 				top: 0;
 				left: 0;
 				right: 0;
 				bottom: 0;
-				background: linear-gradient(
-					135deg,
-					rgba(255, 255, 255, 0.2) 0%,
-					transparent 100%
-				);
+				background: linear-gradient(135deg, rgba(255, 255, 255, 0.2) 0%, transparent 100%);
 				border-radius: 24px;
 			}
 
@@ -128,7 +115,8 @@
 			}
 
 			@keyframes float {
-				0%, 100% {
+				0%,
+				100% {
 					transform: translateY(0) rotate(0);
 				}
 				50% {
@@ -147,11 +135,6 @@
 
 			#note-container:hover {
 				transform: scale(1.02) translateY(-5px);
-				background: rgba(255, 192, 203, 0.9);
-				box-shadow: 
-					0 12px 36px rgba(255, 105, 180, 0.2),
-					inset 0 2px 8px rgba(255, 255, 255, 0.5),
-					0 -2px 6px rgba(255, 255, 255, 0.3);
 				transition: all 0.3s cubic-bezier(0.18, 0.89, 0.32, 1.28);
 			}
 
@@ -165,7 +148,9 @@
 				width: 20px;
 				height: 20px;
 				background: rgba(255, 255, 255, 0.4);
-				clip-path: path('M10 3.22c-0.96-1.71-2.67-2.77-4.61-2.77-2.97 0-5.39 2.42-5.39 5.39 0 3.38 3.53 6.14 8.89 10.69l1.11 1.02 1.11-1.02c5.36-4.55 8.89-7.31 8.89-10.69 0-2.97-2.42-5.39-5.39-5.39-1.94 0-3.65 1.06-4.61 2.77z');
+				clip-path: path(
+					"M10 3.22c-0.96-1.71-2.67-2.77-4.61-2.77-2.97 0-5.39 2.42-5.39 5.39 0 3.38 3.53 6.14 8.89 10.69l1.11 1.02 1.11-1.02c5.36-4.55 8.89-7.31 8.89-10.69 0-2.97-2.42-5.39-5.39-5.39-1.94 0-3.65 1.06-4.61 2.77z"
+				);
 				opacity: 0.6;
 			}
 
@@ -179,7 +164,8 @@
 			}
 
 			@keyframes sparkle {
-				0%, 100% {
+				0%,
+				100% {
 					transform: scale(1) rotate(0deg);
 					opacity: 0.8;
 				}
@@ -188,6 +174,10 @@
 					opacity: 0.4;
 				}
 			}
+
+			/* Theme styles will be injected here */
+			#theme-styles {
+			}
 		</style>
 	</head>
 	<body>
@@ -195,16 +185,40 @@
 			<div id="note-content"></div>
 		</div>
 		<script>
+			function applyTheme(theme) {
+				const themeStyles = document.getElementById("theme-styles");
+				if (!themeStyles) {
+					const style = document.createElement("style");
+					style.id = "theme-styles";
+					document.head.appendChild(style);
+				}
+
+				const css = `
+					#note-container {
+						background: ${theme.background};
+						border: ${theme.borderStyle};
+					}
+					#note-container:hover {
+						background: ${theme.background.replace("0.85", "0.9")};
+					}
+					#note-content {
+						color: ${theme.textColor};
+					}
+				`;
+
+				document.getElementById("theme-styles").textContent = css;
+			}
+
 			// Generate decorative elements
 			function addDecorations() {
-				const container = document.getElementById('note-container');
-				
+				const container = document.getElementById("note-container");
+
 				// Add hearts
 				for (let i = 0; i < 6; i++) {
-					const heart = document.createElement('div');
-					heart.className = 'heart';
-					heart.style.top = Math.random() * 100 + '%';
-					heart.style.left = Math.random() * 100 + '%';
+					const heart = document.createElement("div");
+					heart.className = "heart";
+					heart.style.top = Math.random() * 100 + "%";
+					heart.style.left = Math.random() * 100 + "%";
 					heart.style.animation = `float ${2 + Math.random()}s ease-in-out infinite`;
 					heart.style.animationDelay = `${Math.random()}s`;
 					container.appendChild(heart);
@@ -212,10 +226,10 @@
 
 				// Add sparkles
 				for (let i = 0; i < 8; i++) {
-					const sparkle = document.createElement('div');
-					sparkle.className = 'sparkle';
-					sparkle.style.top = Math.random() * 100 + '%';
-					sparkle.style.left = Math.random() * 100 + '%';
+					const sparkle = document.createElement("div");
+					sparkle.className = "sparkle";
+					sparkle.style.top = Math.random() * 100 + "%";
+					sparkle.style.left = Math.random() * 100 + "%";
 					sparkle.style.animationDelay = `${Math.random()}s`;
 					container.appendChild(sparkle);
 				}
@@ -223,12 +237,14 @@
 
 			window.electron.onNoteContent((message) => {
 				const contentDiv = document.getElementById("note-content");
-				const container = document.getElementById("note-container");
+
+				// Apply theme if provided
+				if (message.theme) {
+					applyTheme(message.theme);
+				}
 
 				if (message.type === "text") {
 					contentDiv.innerText = message.content;
-					container.style.maxWidth = "300px";
-					container.style.minWidth = "120px";
 				} else if (message.type === "drawing" || message.type === "sticker") {
 					const img = document.createElement("img");
 					img.src = message.content;
@@ -237,7 +253,7 @@
 					contentDiv.appendChild(img);
 				}
 
-				// Add decorative elements after content is set
+				// Add decorative elements
 				addDecorations();
 			});
 

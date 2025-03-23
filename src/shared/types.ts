@@ -18,6 +18,9 @@ export interface NoteTheme {
 	textColor: string;
 	borderStyle: string;
 	icon: string;
+	frameStyle?: "heart" | "sticky" | "envelope" | "polaroid" | "cat";
+	decorStyle?: string;
+	fontFamily?: string;
 }
 
 export interface Message {

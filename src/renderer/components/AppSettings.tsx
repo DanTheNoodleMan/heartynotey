@@ -14,11 +14,11 @@ const AppSettings: React.FC = () => {
 		<div className="mb-4">
 			<button
 				onClick={() => setIsOpen(!isOpen)}
-				className={`w-full flex items-center justify-between px-4 py-2 rounded-lg
+				className={`w-full flex items-center justify-between px-4 py-2 rounded-lg cursor-pointer
           ${isOpen ? "bg-pink-100 text-pink-700" : "bg-gray-100 text-gray-700 hover:bg-gray-200"}
           transition-colors mb-2`}
 			>
-				<span className="font-medium">App Settings</span>
+				<span className="font-medium">Note Settings</span>
 				<svg
 					width="16"
 					height="16"

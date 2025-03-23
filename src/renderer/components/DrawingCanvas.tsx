@@ -5,6 +5,18 @@ interface Props {
   wsClient: WebSocketClient | null;
 }
 
+interface Point {
+  x: number;
+  y: number;
+}
+
+interface BrushStyle {
+  id: string;
+  name: string;
+  render: (ctx: CanvasRenderingContext2D, points: Point[], color: string, size: number) => void;
+  icon: string;
+}
+
 // Predefined colors with names
 const PRESET_COLORS = [
   { color: "#ff69b4", name: "Pink" },
@@ -17,6 +29,102 @@ const PRESET_COLORS = [
   { color: "#000000", name: "Black" },
 ];
 
+// Helper function to convert hex to rgba
+const hexToRgba = (hex: string, alpha = 1) => {
+  const r = parseInt(hex.slice(1, 3), 16);
+  const g = parseInt(hex.slice(3, 5), 16);
+  const b = parseInt(hex.slice(5, 7), 16);
+  return `rgba(${r}, ${g}, ${b}, ${alpha})`;
+};
+
+// Brush Styles
+const BRUSH_STYLES: BrushStyle[] = [
+  {
+    id: 'pen',
+    name: 'Pen',
+    icon: '✒️',
+    render: (ctx, points, color, size) => {
+      if (points.length < 2) return;
+      ctx.strokeStyle = color;
+      ctx.lineWidth = size;
+      ctx.lineCap = 'round';
+      ctx.lineJoin = 'round';
+      ctx.beginPath();
+      ctx.moveTo(points[0].x, points[0].y);
+      
+      for (let i = 1; i < points.length; i++) {
+        const xc = (points[i].x + points[i - 1].x) / 2;
+        const yc = (points[i].y + points[i - 1].y) / 2;
+        ctx.quadraticCurveTo(points[i - 1].x, points[i - 1].y, xc, yc);
+      }
+      ctx.stroke();
+    }
+  },
+  {
+    id: 'brush',
+    name: 'Brush',
+    icon: '🖌️',
+    render: (ctx, points, color, size) => {
+      if (points.length < 2) return;
+      
+      const rgba = hexToRgba(color, 0.6);
+      ctx.strokeStyle = rgba;
+      ctx.lineWidth = size * 1.5;
+      ctx.lineCap = 'round';
+      ctx.lineJoin = 'round';
+      
+      ctx.beginPath();
+      ctx.moveTo(points[0].x, points[0].y);
+      
+      for (let i = 1; i < points.length; i++) {
+        const xc = (points[i].x + points[i - 1].x) / 2;
+        const yc = (points[i].y + points[i - 1].y) / 2;
+        ctx.quadraticCurveTo(points[i - 1].x, points[i - 1].y, xc, yc);
+      }
+      ctx.stroke();
+    }
+  },
+  {
+    id: 'gradient',
+    name: 'Gradient',
+    icon: '🎨',
+    render: (ctx, points, color, size) => {
+      if (points.length < 2) return;
+      
+      for (let i = 1; i < points.length; i++) {
+        const gradient = ctx.createLinearGradient(
+          points[i - 1].x, points[i - 1].y,
+          points[i].x, points[i].y
+        );
+        
+        // Create gradient effect
+        gradient.addColorStop(0, hexToRgba(color, 0.2));
+        gradient.addColorStop(0.5, color);
+        gradient.addColorStop(1, hexToRgba(color, 0.2));
+        
+        ctx.strokeStyle = gradient;
+        ctx.lineWidth = size;
+        ctx.lineCap = 'round';
+        ctx.lineJoin = 'round';
+        
+        ctx.beginPath();
+        ctx.moveTo(points[i - 1].x, points[i - 1].y);
+        
+        // Smooth line
+        if (i < points.length - 1) {
+          const xc = (points[i].x + points[i + 1].x) / 2;
+          const yc = (points[i].y + points[i + 1].y) / 2;
+          ctx.quadraticCurveTo(points[i].x, points[i].y, xc, yc);
+        } else {
+          ctx.lineTo(points[i].x, points[i].y);
+        }
+        
+        ctx.stroke();
+      }
+    }
+  }
+];
+
 const DrawingCanvas: React.FC<Props> = ({ wsClient }) => {
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const [isDrawing, setIsDrawing] = useState(false);
@@ -24,11 +132,8 @@ const DrawingCanvas: React.FC<Props> = ({ wsClient }) => {
   const [brushSize, setBrushSize] = useState(3);
   const [customColor, setCustomColor] = useState("#ff69b4");
   const [showColorPicker, setShowColorPicker] = useState(false);
-  const [tool, setTool] = useState<"brush" | "eraser">("brush");
-  const [lastBrushColor, setLastBrushColor] = useState("#ff69b4");
-
-  // Track previous position for smoother lines
-  const lastPosRef = useRef<{ x: number; y: number } | null>(null);
+  const [currentBrush, setCurrentBrush] = useState<BrushStyle>(BRUSH_STYLES[0]);
+  const [currentStroke, setCurrentStroke] = useState<Point[]>([]);
 
   useEffect(() => {
     const canvas = canvasRef.current;
@@ -40,7 +145,6 @@ const DrawingCanvas: React.FC<Props> = ({ wsClient }) => {
     // Set initial canvas state
     ctx.fillStyle = "#ffffff";
     ctx.fillRect(0, 0, canvas.width, canvas.height);
-    updateBrush(ctx);
 
     // Handle window resize
     const handleResize = () => {
@@ -51,14 +155,13 @@ const DrawingCanvas: React.FC<Props> = ({ wsClient }) => {
         // Resize canvas maintaining aspect ratio
         const container = canvas.parentElement;
         if (container) {
-          const displayWidth = Math.min(300, container.clientWidth - 20); // 10px padding on each side
+          const displayWidth = Math.min(300, container.clientWidth - 20);
           canvas.style.width = `${displayWidth}px`;
           canvas.style.height = `${displayWidth}px`;
         }
         
         // Restore the drawing
         ctx.putImageData(imageData, 0, 0);
-        updateBrush(ctx);
       }
     };
 
@@ -70,36 +173,11 @@ const DrawingCanvas: React.FC<Props> = ({ wsClient }) => {
     };
   }, []);
 
-  // Update brush settings when color or size changes
-  useEffect(() => {
-    const canvas = canvasRef.current;
-    if (!canvas) return;
-
-    const ctx = canvas.getContext("2d");
-    if (!ctx) return;
-
-    updateBrush(ctx);
-  }, [color, brushSize, tool]);
-
-  const updateBrush = (ctx: CanvasRenderingContext2D) => {
-    if (tool === "eraser") {
-      ctx.globalCompositeOperation = "destination-out";
-      ctx.strokeStyle = "rgba(0,0,0,1)";
-    } else {
-      ctx.globalCompositeOperation = "source-over";
-      ctx.strokeStyle = color;
-    }
-    ctx.lineWidth = brushSize;
-    ctx.lineCap = "round";
-    ctx.lineJoin = "round";
-  };
-
   const getMousePos = (canvas: HTMLCanvasElement, e: React.MouseEvent | React.TouchEvent) => {
     const rect = canvas.getBoundingClientRect();
     const scaleX = canvas.width / rect.width;
     const scaleY = canvas.height / rect.height;
 
-    // Handle both mouse and touch events
     let clientX, clientY;
     if ("touches" in e) {
       clientX = e.touches[0].clientX;
@@ -116,24 +194,18 @@ const DrawingCanvas: React.FC<Props> = ({ wsClient }) => {
   };
 
   const startDrawing = (e: React.MouseEvent<HTMLCanvasElement> | React.TouchEvent<HTMLCanvasElement>) => {
-    e.preventDefault(); // Prevent scrolling when drawing on touch devices
+    e.preventDefault();
     
     const canvas = canvasRef.current;
     if (!canvas) return;
 
-    const ctx = canvas.getContext("2d");
-    if (!ctx) return;
-
     const { x, y } = getMousePos(canvas, e);
-    
-    ctx.beginPath();
-    ctx.moveTo(x, y);
-    lastPosRef.current = { x, y };
+    setCurrentStroke([{ x, y }]);
     setIsDrawing(true);
   };
 
   const draw = (e: React.MouseEvent<HTMLCanvasElement> | React.TouchEvent<HTMLCanvasElement>) => {
-    e.preventDefault(); // Prevent scrolling when drawing on touch devices
+    e.preventDefault();
     
     if (!isDrawing) return;
 
@@ -144,39 +216,18 @@ const DrawingCanvas: React.FC<Props> = ({ wsClient }) => {
     if (!ctx) return;
 
     const { x, y } = getMousePos(canvas, e);
+    const newPoint = { x, y };
     
-    // For smooth lines, we'll use quadratic curves
-    if (lastPosRef.current) {
-      const lastPos = lastPosRef.current;
-      
-      // Calculate control point (midpoint)
-      const controlX = (lastPos.x + x) / 2;
-      const controlY = (lastPos.y + y) / 2;
-      
-      // Draw a quadratic curve to the midpoint
-      ctx.quadraticCurveTo(lastPos.x, lastPos.y, controlX, controlY);
-      ctx.stroke();
-      
-      // Start a new path from the midpoint
-      ctx.beginPath();
-      ctx.moveTo(controlX, controlY);
-    }
-    
-    lastPosRef.current = { x, y };
+    setCurrentStroke(prev => {
+      const updatedStroke = [...prev, newPoint];
+      currentBrush.render(ctx, updatedStroke, color, brushSize);
+      return updatedStroke;
+    });
   };
 
   const stopDrawing = () => {
-    if (!isDrawing) return;
-
-    const canvas = canvasRef.current;
-    if (!canvas) return;
-
-    const ctx = canvas.getContext("2d");
-    if (!ctx) return;
-
-    ctx.closePath();
     setIsDrawing(false);
-    lastPosRef.current = null;
+    setCurrentStroke([]);
   };
 
   const clearCanvas = () => {
@@ -188,7 +239,6 @@ const DrawingCanvas: React.FC<Props> = ({ wsClient }) => {
 
     ctx.fillStyle = "#ffffff";
     ctx.fillRect(0, 0, canvas.width, canvas.height);
-    updateBrush(ctx);
   };
 
   const sendDrawing = () => {
@@ -197,81 +247,61 @@ const DrawingCanvas: React.FC<Props> = ({ wsClient }) => {
     const canvas = canvasRef.current;
     const dataUrl = canvas.toDataURL("image/png");
     wsClient.sendMessage(dataUrl, "drawing");
-
-    // Optional: Clear canvas after sending
     clearCanvas();
-  };
-
-  const handleToolChange = (newTool: "brush" | "eraser") => {
-    if (newTool === "brush") {
-      setColor(lastBrushColor);
-    } else if (newTool === "eraser" && tool === "brush") {
-      setLastBrushColor(color);
-    }
-    setTool(newTool);
-  };
-
-  const applyCustomColor = () => {
-    setColor(customColor);
-    setShowColorPicker(false);
   };
 
   return (
     <div className="flex flex-col gap-4">
       <div className="bg-white rounded-lg p-4 shadow-sm">
-        {/* Tools and color selection */}
-        <div className="flex justify-between items-center mb-4">
-          {/* Tool buttons */}
+        {/* Brush style selector */}
+        <div className="mb-4">
+          <label className="block text-sm text-gray-600 mb-2">Brush Style</label>
           <div className="flex gap-2">
-            <button
-              className={`p-2 rounded-md ${tool === "brush" ? "bg-pink-100 text-pink-700" : "bg-gray-100 text-gray-700"}`}
-              onClick={() => handleToolChange("brush")}
-              title="Brush"
-            >
-              <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor">
-                <path d="M7 14c-1.66 0-3 1.34-3 3 0 1.31-1.16 2-2 2 .92 1.22 2.49 2 4 2 2.21 0 4-1.79 4-4 0-1.66-1.34-3-3-3zm13.71-9.37l-1.34-1.34c-.39-.39-1.02-.39-1.41 0L9 12.25 11.75 15l8.96-8.96c.39-.39.39-1.02 0-1.41z" />
-              </svg>
-            </button>
-            <button
-              className={`p-2 rounded-md ${tool === "eraser" ? "bg-pink-100 text-pink-700" : "bg-gray-100 text-gray-700"}`}
-              onClick={() => handleToolChange("eraser")}
-              title="Eraser"
-            >
-              <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor">
-                <path d="M15.14 3c-.51 0-1.02.2-1.41.59L2.59 14.73c-.78.77-.78 2.04 0 2.83L5.03 20h7.94l8.08-8.08c.78-.78.78-2.03 0-2.83l-4.5-4.5C16.16 3.2 15.65 3 15.14 3zm-1.41 14.39L5.41 9.07l2.12-2.12 8.32 8.32-2.12 2.12z" />
-              </svg>
-            </button>
+            {BRUSH_STYLES.map(brush => (
+              <button
+                key={brush.id}
+                onClick={() => setCurrentBrush(brush)}
+                className={`p-3 rounded-lg transition-all cursor-pointer ${
+                  currentBrush.id === brush.id
+                    ? "bg-pink-100 text-pink-600 scale-110 shadow-md"
+                    : "bg-gray-100 text-gray-600 hover:bg-gray-200"
+                }`}
+                title={brush.name}
+              >
+                <span className="text-xl">{brush.icon}</span>
+              </button>
+            ))}
           </div>
+        </div>
 
-          {/* Size slider */}
+        {/* Size slider */}
+        <div className="mb-4">
+          <label className="block text-sm text-gray-600 mb-2">Brush Size</label>
           <div className="flex items-center gap-2">
-            <span className="text-sm text-gray-600">Size:</span>
             <input
               type="range"
               min="1"
               max="20"
               value={brushSize}
               onChange={(e) => setBrushSize(Number(e.target.value))}
-              className="w-24"
+              className="flex-1"
             />
-            <span className="text-sm w-6 text-center">{brushSize}</span>
+            <span className="text-sm w-8 text-center">{brushSize}</span>
           </div>
         </div>
 
         {/* Color selection */}
-        <div className="mb-4">
+        <div>
+          <label className="block text-sm text-gray-600 mb-2">Color</label>
           <div className="flex flex-wrap gap-2 mb-2">
             {PRESET_COLORS.map((preset) => (
               <button
                 key={preset.color}
                 className={`w-8 h-8 rounded-full cursor-pointer transition-transform ${
-                  color === preset.color && tool !== "eraser" ? "ring-2 ring-offset-2 ring-pink-500 scale-110" : ""
+                  color === preset.color ? "ring-2 ring-offset-2 ring-pink-500 scale-110" : ""
                 }`}
                 style={{ backgroundColor: preset.color }}
-                onClick={() => {
-                  setColor(preset.color);
-                  setTool("brush");
-                }}
+                onClick={() => setColor(preset.color)}
                 title={preset.name}
               />
             ))}
@@ -307,7 +337,10 @@ const DrawingCanvas: React.FC<Props> = ({ wsClient }) => {
                 />
               </div>
               <button
-                onClick={applyCustomColor}
+                onClick={() => {
+                  setColor(customColor);
+                  setShowColorPicker(false);
+                }}
                 className="px-3 py-1 bg-pink-500 text-white rounded hover:bg-pink-600"
               >
                 Apply
@@ -331,7 +364,7 @@ const DrawingCanvas: React.FC<Props> = ({ wsClient }) => {
             onTouchStart={startDrawing}
             onTouchMove={draw}
             onTouchEnd={stopDrawing}
-            className="border rounded-lg bg-white touch-none shadow-inner"
+            className="border rounded-lg bg-white touch-none cursor-crosshair"
             style={{ maxWidth: '100%', height: 'auto' }}
           />
         </div>
@@ -339,13 +372,13 @@ const DrawingCanvas: React.FC<Props> = ({ wsClient }) => {
         <div className="flex gap-2">
           <button 
             onClick={clearCanvas} 
-            className="flex-1 bg-gray-200 text-gray-800 px-4 py-2 rounded-lg hover:bg-gray-300 cursor-pointer transition-colors"
+            className="flex-1 bg-gray-200 text-gray-800 px-4 py-2 rounded-lg hover:bg-gray-300 transition-colors cursor-pointer"
           >
             Clear
           </button>
           <button 
             onClick={sendDrawing} 
-            className="flex-1 bg-pink-500 text-white px-4 py-2 rounded-lg hover:bg-pink-600 cursor-pointer transition-colors"
+            className="flex-1 bg-pink-500 text-white px-4 py-2 rounded-lg hover:bg-pink-600 transition-colors cursor-pointer"
           >
             Send Drawing
           </button>

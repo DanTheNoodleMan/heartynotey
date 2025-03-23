@@ -268,7 +268,7 @@ const NoteCustomization: React.FC<Props> = ({ onThemeChange }) => {
 									<button
 										key={icon}
 										onClick={() => setCustomTheme({ ...customTheme, icon })}
-										className={`w-8 h-8 rounded-full flex items-center justify-center ${
+										className={`w-8 h-8 rounded-full flex items-center justify-center cursor-pointer ${
 											customTheme.icon === icon ? "bg-pink-100 ring-2 ring-pink-500" : "bg-white border"
 										}`}
 									>
@@ -281,13 +281,13 @@ const NoteCustomization: React.FC<Props> = ({ onThemeChange }) => {
 						<div className="flex justify-end gap-2 mt-4">
 							<button
 								onClick={() => setShowCustomizer(false)}
-								className="px-3 py-1 bg-gray-200 rounded hover:bg-gray-300 text-sm"
+								className="px-3 py-1 bg-gray-200 rounded hover:bg-gray-300 text-sm cursor-pointer"
 							>
 								Cancel
 							</button>
 							<button
 								onClick={handleSaveCustomTheme}
-								className="px-3 py-1 bg-pink-500 text-white rounded hover:bg-pink-600 text-sm"
+								className="px-3 py-1 bg-pink-500 text-white rounded hover:bg-pink-600 text-sm cursor-pointer"
 							>
 								Save Theme
 							</button>
