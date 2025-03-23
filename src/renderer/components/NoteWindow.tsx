@@ -6,10 +6,14 @@ import { NoteTheme } from "./NoteCustomization";
 const DEFAULT_THEME: NoteTheme = {
 	id: "default",
 	name: "Classic Pink",
-	background: "rgba(255, 182, 193, 0.85)",
-	textColor: "#4a154b",
+	background: "rgba(255, 107, 107)",
+	textColor: "#4a4a4a",
 	borderStyle: "2px solid rgba(255, 255, 255, 0.5)",
 	icon: "❤️",
+	noteStyle: "default",
+	animation: "fade-in",
+	fontFamily: "'Comic Sans MS', cursive, sans-serif",
+	primaryColor: "#ff6b6b",
 };
 
 interface ExtendedMessage extends Message {
@@ -41,50 +45,56 @@ const NoteWindow: React.FC = () => {
 
 	const handleClose = () => {
 		setIsClosing(true);
-		setTimeout(() => window.electron.closeNote(), 300);
+		setTimeout(() => window.electron.closeNote(), 400);
 	};
 
 	// Don't render anything if there's no message
 	if (!message) return null;
 
-	// Apply the theme to the note container
-	const containerStyle = {
-		background: theme.background,
-		color: theme.textColor,
-		border: theme.borderStyle,
+	// Get animation class
+	const animationClass = theme.animation || "fade-in";
+
+	// Get style for the note based on noteStyle
+	const getNoteStyleClass = () => {
+		const style = theme.noteStyle || "default";
+		return style !== "default" ? style : "";
 	};
 
 	return (
-		<div
-			className={`p-4 rounded-lg shadow-lg animate-fade-in
-			${isClosing ? "animate-fade-out" : ""}`}
-			onClick={handleClose}
-			style={{
-				maxWidth: "100%",
-				maxHeight: "100%",
-				display: "flex",
-				justifyContent: "center",
-				alignItems: "center",
-				cursor: "pointer",
-				...containerStyle,
-			}}
-		>
-			{message.type === "text" && (
-				<p className="font-medium text-center" style={{ color: theme.textColor }}>
-					{message.content}
-				</p>
-			)}
+		<div className="note-container">
+			<div
+				className={`note ${animationClass} ${getNoteStyleClass()} ${isClosing ? "fade-out" : ""}`}
+				onClick={handleClose}
+				style={{
+					backgroundColor: theme.background,
+					color: theme.textColor,
+					borderColor: theme.primaryColor,
+					fontFamily: theme.fontFamily || DEFAULT_THEME.fontFamily,
+				}}
+			>
+				<div className="note-header">
+					<div className="close-btn">×</div>
+				</div>
 
-			{message.type === "sticker" && (
-				<img src={message.content} alt="Sticker" className="w-full h-auto max-h-[200px] object-contain" />
-			)}
+				<div className="note-content">
+					{message.type === "text" && <p>{message.content}</p>}
 
-			{message.type === "drawing" && (
-				<img src={message.content} alt="Drawing" className="w-full h-auto max-h-[200px] object-contain" />
-			)}
+					{message.type === "sticker" && (
+						<img src={message.content} alt="Sticker" className="w-full h-auto max-h-[200px] object-contain" />
+					)}
 
-			{/* Theme icon decoration */}
-			<div className="absolute bottom-2 right-2 opacity-50 text-sm">{theme.icon}</div>
+					{message.type === "drawing" && (
+						<img src={message.content} alt="Drawing" className="w-full h-auto max-h-[200px] object-contain" />
+					)}
+				</div>
+
+				<div className="note-footer">
+					{new Date(message.timestamp).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })}
+				</div>
+
+				{/* Display sticker if selected */}
+				{theme.sticker && <div className="note-sticker">{theme.sticker}</div>}
+			</div>
 		</div>
 	);
 };

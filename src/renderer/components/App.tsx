@@ -3,6 +3,7 @@ import { WebSocketClient } from "../utils/websocket";
 import { Room } from "../../shared/types";
 import RoomJoin from "./RoomJoin";
 import MessageSender from "./MessageSender";
+import StickerPicker from "./StickerPicker";
 import DrawingCanvas from "./DrawingCanvas";
 import RoomInfo from "./RoomInfo";
 import AppSettings from "./AppSettings";
@@ -17,6 +18,12 @@ const MessageIcon = () => (
 const DrawIcon = () => (
 	<svg width="24" height="24" viewBox="0 0 24 24" fill="currentColor">
 		<path d="M3 17.25V21h3.75L17.81 9.94l-3.75-3.75L3 17.25zM20.71 7.04c.39-.39.39-1.02 0-1.41l-2.34-2.34c-.39-.39-1.02-.39-1.41 0l-1.83 1.83 3.75 3.75 1.83-1.83z" />
+	</svg>
+);
+
+const StickerIcon = () => (
+	<svg width="24" height="24" viewBox="0 0 24 24" fill="currentColor">
+		<path d="M18.5 2h-13C4.12 2 3 3.12 3 4.5v15C3 20.88 4.12 22 5.5 22h13c1.38 0 2.5-1.12 2.5-2.5v-15C21 3.12 19.88 2 18.5 2zM19 19.5c0 .28-.22.5-.5.5h-13c-.28 0-.5-.22-.5-.5v-15c0-.28.22-.5.5-.5h13c.28 0 .5.22.5.5v15zM7.75 15c.69 0 1.25-.56 1.25-1.25S8.44 12.5 7.75 12.5 6.5 13.06 6.5 13.75 7.06 15 7.75 15zm4.25 0c.69 0 1.25-.56 1.25-1.25s-.56-1.25-1.25-1.25-1.25.56-1.25 1.25.56 1.25 1.25 1.25zm4.25 0c.69 0 1.25-.56 1.25-1.25s-.56-1.25-1.25-1.25-1.25.56-1.25 1.25.56 1.25 1.25 1.25zM15 9H9c-.55 0-1-.45-1-1s.45-1 1-1h6c.55 0 1 .45 1 1s-.45 1-1 1z" />
 	</svg>
 );
 
@@ -150,11 +157,7 @@ const App: React.FC = () => {
 						<button
 							onClick={() => setActiveTab("message")}
 							className={`flex items-center gap-2 px-6 py-3 rounded-full transition-all duration-300 cursor-pointer
-                ${
-					activeTab === "message"
-						? "bg-pink-500 text-white shadow-md transform scale-105"
-						: "bg-pink-100 text-pink-700 hover:bg-pink-200"
-				}`}
+					${activeTab === "message" ? "bg-pink-500 text-white shadow-md transform scale-105" : "bg-pink-100 text-pink-700 hover:bg-pink-200"}`}
 						>
 							<MessageIcon />
 							<span>Message</span>
@@ -163,20 +166,30 @@ const App: React.FC = () => {
 						<button
 							onClick={() => setActiveTab("drawing")}
 							className={`flex items-center gap-2 px-6 py-3 rounded-full transition-all duration-300 cursor-pointer
-                ${
-					activeTab === "drawing"
-						? "bg-pink-500 text-white shadow-md transform scale-105"
-						: "bg-pink-100 text-pink-700 hover:bg-pink-200"
-				}`}
+					${activeTab === "drawing" ? "bg-pink-500 text-white shadow-md transform scale-105" : "bg-pink-100 text-pink-700 hover:bg-pink-200"}`}
 						>
 							<DrawIcon />
 							<span>Draw</span>
+						</button>
+
+						<button
+							onClick={() => setActiveTab("sticker")}
+							className={`flex items-center gap-2 px-6 py-3 rounded-full transition-all duration-300 cursor-pointer
+					${activeTab === "sticker" ? "bg-pink-500 text-white shadow-md transform scale-105" : "bg-pink-100 text-pink-700 hover:bg-pink-200"}`}
+						>
+							<StickerIcon />
+							<span>Stickers</span>
 						</button>
 					</div>
 
 					<div className="transition-all duration-300">
 						{activeTab === "message" && <MessageSender wsClient={wsClient} />}
 						{activeTab === "drawing" && <DrawingCanvas wsClient={wsClient} />}
+						{activeTab === "sticker" && (
+							<div className="bg-white rounded-2xl shadow-love p-6">
+								<StickerPicker wsClient={wsClient} onClose={() => {}} />
+							</div>
+						)}
 					</div>
 				</div>
 			</div>

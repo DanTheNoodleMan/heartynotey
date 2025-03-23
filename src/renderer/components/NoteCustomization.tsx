@@ -8,6 +8,11 @@ export interface NoteTheme {
 	textColor: string;
 	borderStyle: string;
 	icon: string;
+	noteStyle?: "default" | "rounded-corners" | "square-corners" | "polaroid" | "post-it" | "cloud";
+	animation?: "fade-in" | "slide-in" | "pop-in" | "heartbeat" | "bounce-1";
+	fontFamily?: string;
+	sticker?: string;
+	primaryColor?: string;
 }
 
 // Predefined themes
@@ -15,42 +20,62 @@ const DEFAULT_THEMES: NoteTheme[] = [
 	{
 		id: "default",
 		name: "Classic Pink",
-		background: "rgba(255, 182, 193, 0.85)",
-		textColor: "#4a154b",
+		background: "rgba(255, 107, 107)",
+		textColor: "#4a4a4a",
 		borderStyle: "2px solid rgba(255, 255, 255, 0.5)",
 		icon: "❤️",
+		noteStyle: "default",
+		animation: "fade-in",
+		fontFamily: "'Comic Sans MS', cursive, sans-serif",
+		primaryColor: "#ff6b6b",
 	},
 	{
-		id: "clouds",
+		id: "blue",
 		name: "Fluffy Clouds",
-		background: "rgba(208, 235, 255, 0.85)",
-		textColor: "#1e3a8a",
+		background: "rgba(216, 248, 255)",
+		textColor: "#4a4a4a",
 		borderStyle: "2px solid rgba(255, 255, 255, 0.7)",
 		icon: "☁️",
+		noteStyle: "cloud",
+		animation: "slide-in",
+		fontFamily: "'Arial', sans-serif",
+		primaryColor: "#6bb5ff",
 	},
 	{
-		id: "flowers",
-		name: "Spring Flowers",
-		background: "rgba(253, 242, 250, 0.85)",
-		textColor: "#831843",
-		borderStyle: "2px solid rgba(244, 114, 182, 0.4)",
-		icon: "🌸",
+		id: "yellow",
+		name: "Sunny Notes",
+		background: "rgba(249, 249, 216)",
+		textColor: "#4a4a4a",
+		borderStyle: "2px solid rgba(255, 255, 255, 0.4)",
+		icon: "🌟",
+		noteStyle: "post-it",
+		animation: "pop-in",
+		fontFamily: "'Brush Script MT', cursive",
+		primaryColor: "#ffe066",
 	},
 	{
-		id: "stars",
-		name: "Starry Night",
-		background: "rgba(30, 41, 59, 0.85)",
-		textColor: "#e2e8f0",
-		borderStyle: "2px solid rgba(148, 163, 184, 0.5)",
-		icon: "✨",
+		id: "green",
+		name: "Spring Leaves",
+		background: "rgba(224, 248, 216)",
+		textColor: "#4a4a4a",
+		borderStyle: "2px solid rgba(224, 248, 216, 0.5)",
+		icon: "🍀",
+		noteStyle: "rounded-corners",
+		animation: "bounce-1",
+		fontFamily: "'Georgia', serif",
+		primaryColor: "#7cdc69",
 	},
 	{
-		id: "hearts",
-		name: "Floating Hearts",
-		background: "rgba(254, 226, 226, 0.85)",
-		textColor: "#b91c1c",
-		borderStyle: "2px solid rgba(248, 113, 113, 0.4)",
-		icon: "💕",
+		id: "purple",
+		name: "Lavender Dreams",
+		background: "rgba(248, 216, 248)",
+		textColor: "#4a4a4a",
+		borderStyle: "2px solid rgba(216, 120, 216, 0.4)",
+		icon: "🦋",
+		noteStyle: "polaroid",
+		animation: "heartbeat",
+		fontFamily: "'Courier New', monospace",
+		primaryColor: "#d878d8",
 	},
 ];
 
@@ -65,11 +90,21 @@ const NoteCustomization: React.FC<Props> = ({ onThemeChange }) => {
 	const [customTheme, setCustomTheme] = useState<NoteTheme>({
 		id: "custom",
 		name: "My Theme",
-		background: "rgba(255, 182, 193, 0.85)",
-		textColor: "#4a154b",
+		background: "rgba(255, 107, 107)",
+		textColor: "#4a4a4a",
 		borderStyle: "2px solid rgba(255, 255, 255, 0.5)",
 		icon: "❤️",
+		noteStyle: "default",
+		animation: "fade-in",
+		fontFamily: "'Comic Sans MS', cursive, sans-serif",
+		primaryColor: "#ff6b6b",
 	});
+
+	// Toggle for sticker section
+	const [showStickers, setShowStickers] = useState(false);
+
+	// Selected sticker
+	const [selectedSticker, setSelectedSticker] = useState<string>("");
 
 	// Load saved themes from localStorage
 	useEffect(() => {
@@ -94,10 +129,13 @@ const NoteCustomization: React.FC<Props> = ({ onThemeChange }) => {
 	useEffect(() => {
 		const theme = themes.find((t) => t.id === selectedTheme);
 		if (theme) {
-			onThemeChange(theme);
+			// Update with sticker if there is one selected
+			const updatedTheme = selectedSticker ? { ...theme, sticker: selectedSticker } : { ...theme, sticker: undefined };
+
+			onThemeChange(updatedTheme);
 			localStorage.setItem("selectedNoteTheme", selectedTheme);
 		}
-	}, [selectedTheme, themes, onThemeChange]);
+	}, [selectedTheme, themes, selectedSticker, onThemeChange]);
 
 	const handleSaveCustomTheme = () => {
 		// Create a unique ID for the custom theme
@@ -147,6 +185,37 @@ const NoteCustomization: React.FC<Props> = ({ onThemeChange }) => {
 	// Available emoji icons for custom themes
 	const availableIcons = ["❤️", "💕", "🌸", "✨", "☁️", "🌈", "🍀", "🌟", "🦄", "🎀"];
 
+	// Available stickers
+	const availableStickers = ["❤️", "😘", "🌟", "🌺", "🥰", "💖", "🍀", "🦋", "☕"];
+
+	// Note style options
+	const noteStyles = [
+		{ id: "default", name: "Default" },
+		{ id: "rounded-corners", name: "Rounded" },
+		{ id: "square-corners", name: "Square" },
+		{ id: "polaroid", name: "Polaroid" },
+		{ id: "post-it", name: "Post-it" },
+		{ id: "cloud", name: "Cloud" },
+	];
+
+	// Animation options
+	const animationOptions = [
+		{ id: "fade-in", name: "Fade In" },
+		{ id: "slide-in", name: "Slide In" },
+		{ id: "pop-in", name: "Pop In" },
+		{ id: "heartbeat", name: "Heartbeat" },
+		{ id: "bounce-1", name: "Bounce" },
+	];
+
+	// Font options
+	const fontOptions = [
+		{ id: "'Comic Sans MS', cursive, sans-serif", name: "Comic Sans" },
+		{ id: "'Courier New', monospace", name: "Typewriter" },
+		{ id: "'Brush Script MT', cursive", name: "Handwritten" },
+		{ id: "'Arial', sans-serif", name: "Simple" },
+		{ id: "'Georgia', serif", name: "Elegant" },
+	];
+
 	return (
 		<div className="bg-white rounded-lg p-4 shadow-sm">
 			<h3 className="text-lg font-medium text-pink-700 mb-3">Note Appearance</h3>
@@ -194,6 +263,181 @@ const NoteCustomization: React.FC<Props> = ({ onThemeChange }) => {
 					<span className="text-xs font-medium">Create Theme</span>
 				</div>
 			</div>
+
+			{/* Note Style Selection */}
+			<div className="mb-4">
+				<h4 className="text-sm font-medium mb-2">Note Style</h4>
+				<div className="flex flex-wrap gap-2">
+					{noteStyles.map((style) => {
+						const currentTheme = themes.find((t) => t.id === selectedTheme);
+						const isActive = currentTheme?.noteStyle === style.id;
+
+						return (
+							<button
+								key={style.id}
+								onClick={() => {
+									const theme = themes.find((t) => t.id === selectedTheme);
+									if (theme) {
+										// Create a copy with the updated style
+										const updatedTheme = { ...theme, noteStyle: style.id as any };
+
+										// Update themes list
+										const updatedThemes = themes.map((t) => (t.id === theme.id ? updatedTheme : t));
+
+										setThemes(updatedThemes);
+
+										// Update selected theme
+										onThemeChange(updatedTheme);
+
+										// Save if it's a custom theme
+										if (!DEFAULT_THEMES.some((dt) => dt.id === theme.id)) {
+											const customThemesToSave = updatedThemes.filter(
+												(t) => !DEFAULT_THEMES.some((dt) => dt.id === t.id)
+											);
+											localStorage.setItem("noteThemes", JSON.stringify(customThemesToSave));
+										}
+									}
+								}}
+								className={`px-3 py-1 text-sm rounded-full transition-colors ${
+									isActive ? "bg-pink-500 text-white" : "bg-gray-100 text-gray-700 hover:bg-gray-200"
+								}`}
+							>
+								{style.name}
+							</button>
+						);
+					})}
+				</div>
+			</div>
+
+			{/* Animation Selection */}
+			<div className="mb-4">
+				<h4 className="text-sm font-medium mb-2">Animation</h4>
+				<div className="flex flex-wrap gap-2">
+					{animationOptions.map((animation) => {
+						const currentTheme = themes.find((t) => t.id === selectedTheme);
+						const isActive = currentTheme?.animation === animation.id;
+
+						return (
+							<button
+								key={animation.id}
+								onClick={() => {
+									const theme = themes.find((t) => t.id === selectedTheme);
+									if (theme) {
+										// Create a copy with the updated animation
+										const updatedTheme = { ...theme, animation: animation.id as any };
+
+										// Update themes list
+										const updatedThemes = themes.map((t) => (t.id === theme.id ? updatedTheme : t));
+
+										setThemes(updatedThemes);
+
+										// Update selected theme
+										onThemeChange(updatedTheme);
+
+										// Save if it's a custom theme
+										if (!DEFAULT_THEMES.some((dt) => dt.id === theme.id)) {
+											const customThemesToSave = updatedThemes.filter(
+												(t) => !DEFAULT_THEMES.some((dt) => dt.id === t.id)
+											);
+											localStorage.setItem("noteThemes", JSON.stringify(customThemesToSave));
+										}
+									}
+								}}
+								className={`px-3 py-1 text-sm rounded-full transition-colors ${
+									isActive ? "bg-pink-500 text-white" : "bg-gray-100 text-gray-700 hover:bg-gray-200"
+								}`}
+							>
+								{animation.name}
+							</button>
+						);
+					})}
+				</div>
+			</div>
+
+			{/* Font Style Selection */}
+			<div className="mb-4">
+				<h4 className="text-sm font-medium mb-2">Font Style</h4>
+				<div className="flex flex-wrap gap-2">
+					{fontOptions.map((font) => {
+						const currentTheme = themes.find((t) => t.id === selectedTheme);
+						const isActive = currentTheme?.fontFamily === font.id;
+
+						return (
+							<button
+								key={font.id}
+								style={{ fontFamily: font.id }}
+								onClick={() => {
+									const theme = themes.find((t) => t.id === selectedTheme);
+									if (theme) {
+										// Create a copy with the updated font
+										const updatedTheme = { ...theme, fontFamily: font.id };
+
+										// Update themes list
+										const updatedThemes = themes.map((t) => (t.id === theme.id ? updatedTheme : t));
+
+										setThemes(updatedThemes);
+
+										// Update selected theme
+										onThemeChange(updatedTheme);
+
+										// Save if it's a custom theme
+										if (!DEFAULT_THEMES.some((dt) => dt.id === theme.id)) {
+											const customThemesToSave = updatedThemes.filter(
+												(t) => !DEFAULT_THEMES.some((dt) => dt.id === t.id)
+											);
+											localStorage.setItem("noteThemes", JSON.stringify(customThemesToSave));
+										}
+									}
+								}}
+								className={`px-3 py-1 text-sm rounded-full transition-colors ${
+									isActive ? "bg-pink-500 text-white" : "bg-gray-100 text-gray-700 hover:bg-gray-200"
+								}`}
+							>
+								{font.name}
+							</button>
+						);
+					})}
+				</div>
+			</div>
+
+			{/* Sticker Toggle */}
+			<div className="flex items-center gap-2 mb-3">
+				<span className="text-sm">Add Stickers:</span>
+				<div
+					className={`w-10 h-5 rounded-full p-1 cursor-pointer transition-colors ${showStickers ? "bg-pink-500" : "bg-gray-300"}`}
+					onClick={() => setShowStickers(!showStickers)}
+				>
+					<div
+						className={`w-3 h-3 bg-white rounded-full transition-transform ${showStickers ? "transform translate-x-5" : ""}`}
+					></div>
+				</div>
+			</div>
+
+			{/* Sticker Selection */}
+			{showStickers && (
+				<div className="flex flex-wrap gap-2 mb-3 p-2 bg-gray-50 rounded-lg">
+					{availableStickers.map((sticker) => (
+						<div
+							key={sticker}
+							onClick={() => setSelectedSticker(sticker)}
+							className={`w-8 h-8 rounded-full cursor-pointer flex items-center justify-center
+                ${selectedSticker === sticker ? "bg-pink-100 ring-2 ring-pink-500" : "bg-white border hover:bg-gray-100"}`}
+						>
+							{sticker}
+						</div>
+					))}
+
+					{/* Clear sticker button */}
+					{selectedSticker && (
+						<button
+							onClick={() => setSelectedSticker("")}
+							className="px-2 py-1 text-xs bg-gray-200 rounded hover:bg-gray-300 text-gray-700"
+						>
+							Clear Sticker
+						</button>
+					)}
+				</div>
+			)}
 
 			{/* Custom Theme Creator */}
 			{showCustomizer && (

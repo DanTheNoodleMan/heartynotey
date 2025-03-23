@@ -7,99 +7,193 @@
 		<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
 		<link href="https://fonts.googleapis.com/css2?family=Quicksand:wght@400;500;600&display=swap" rel="stylesheet" />
 		<style>
+			:root {
+				--primary-color: #ff6b6b;
+				--secondary-color: #ffd8d8;
+				--text-color: #4a4a4a;
+				--shadow-color: rgba(0, 0, 0, 0.1);
+				--note-width: 280px;
+				--font-family: "Comic Sans MS", cursive, sans-serif;
+			}
+
 			html {
 				height: 100%;
 			}
 			body {
 				margin: 0;
-				padding: 0;
+				padding: 20px;
 				height: 100%;
 				background: transparent;
 				overflow: hidden;
-				font-family: "PlaywriteHU", "Quicksand", sans-serif;
+				font-family: var(--font-family);
 				cursor: pointer;
 				user-select: none;
 				-webkit-app-region: drag;
-			}
-
-			#note-container {
 				display: flex;
-				align-items: center;
-				justify-content: center;
-				padding: 20px;
-				backdrop-filter: blur(12px);
-				-webkit-backdrop-filter: blur(12px);
-				border-radius: 24px;
-				box-shadow: 0 8px 32px rgba(0, 0, 0, 0.15);
+				border: none;
+				box-shadow: none;
+			}
+
+			.note-container {
+				width: var(--note-width);
+				height: auto;
+				position: relative;
+				transition: transform 0.3s, box-shadow 0.3s;
+				transform-origin: center center;
+				margin: auto;
+			}
+
+			.note {
 				width: 100%;
-				height: 100%;
-				box-sizing: border-box;
-				animation: floatIn 0.6s cubic-bezier(0.18, 0.89, 0.32, 1.28);
-				transform-origin: center;
+				padding: 20px;
+				border-radius: 15px;
+				background-color: var(--secondary-color);
+				box-shadow: 3px 3px 10px var(--shadow-color);
 				position: relative;
+				color: var(--text-color);
 				overflow: hidden;
+				will-change: transform;
 			}
 
-			#note-container::before {
+			.note::before {
 				content: "";
 				position: absolute;
-				top: -50%;
-				left: -50%;
-				width: 200%;
-				height: 200%;
-				background: radial-gradient(circle at center, rgba(255, 255, 255, 0.2) 0%, transparent 70%);
+				top: -10px;
+				left: 20px;
+				width: 40px;
+				height: 20px;
+				background-color: var(--primary-color);
+				border-radius: 0 0 20px 20px;
+				box-shadow: 0 2px 5px var(--shadow-color);
 			}
 
-			#note-container::after {
-				content: "";
-				position: absolute;
-				top: 0;
-				left: 0;
-				right: 0;
-				bottom: 0;
-				background: linear-gradient(135deg, rgba(255, 255, 255, 0.2) 0%, transparent 100%);
-				border-radius: 24px;
+			.note-header {
+				display: flex;
+				justify-content: flex-end;
+				margin-bottom: 10px;
 			}
 
-			#note-content {
-				color: #4a154b;
-				font-size: 18px;
-				line-height: 1.6;
+			.close-btn {
+				width: 20px;
+				height: 20px;
+				background: white;
+				border-radius: 50%;
+				display: flex;
+				justify-content: center;
+				align-items: center;
+				cursor: pointer;
+				font-size: 14px;
+				font-weight: bold;
+				color: var(--primary-color);
+				border: 1px solid var(--primary-color);
+			}
+
+			.note-content {
+				margin-bottom: 10px;
 				word-wrap: break-word;
-				margin: 0;
-				font-weight: 500;
-				letter-spacing: 0.3px;
-				position: relative;
-				z-index: 2;
-				text-shadow: 0 1px 2px rgba(255, 255, 255, 0.3);
+				font-size: 16px;
+				line-height: 1.4;
 			}
 
-			.hearts {
+			.note-footer {
+				font-size: 12px;
+				text-align: right;
+				font-style: italic;
+				opacity: 0.7;
+			}
+
+			/* Note Sticker */
+			.note-sticker {
 				position: absolute;
-				pointer-events: none;
-				animation: float 3s ease-in-out infinite;
+				bottom: 10px;
+				left: 10px;
+				font-size: 24px;
 			}
 
-			img {
-				max-width: 100%;
-				border-radius: 16px;
-				display: block;
-				margin: 0 auto;
-				box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
-				border: 2px solid rgba(255, 255, 255, 0.3);
+			/* Style Variations */
+			.note.rounded-corners {
+				border-radius: 25px;
 			}
 
-			@keyframes floatIn {
-				0% {
+			.note.square-corners {
+				border-radius: 5px;
+			}
+
+			.note.polaroid {
+				padding-bottom: 40px;
+				box-shadow: 0 6px 15px var(--shadow-color);
+				border: 8px solid white;
+				border-bottom: 40px solid white;
+			}
+
+			.note.post-it {
+				transform: rotate(2deg);
+				box-shadow: 2px 2px 5px var(--shadow-color);
+			}
+
+			.note.cloud {
+				border-radius: 50px;
+				background: white;
+			}
+
+			/* Animation Keyframes */
+			@keyframes fadeIn {
+				from {
 					opacity: 0;
-					transform: translateY(20px) scale(0.9) rotate(-2deg);
+				}
+				to {
+					opacity: 1;
+				}
+			}
+
+			@keyframes slideIn {
+				from {
+					transform: translateY(-50px);
+					opacity: 0;
+				}
+				to {
+					transform: translateY(0);
+					opacity: 1;
+				}
+			}
+
+			@keyframes popIn {
+				0% {
+					transform: scale(0);
 				}
 				70% {
-					transform: translateY(-5px) scale(1.02) rotate(1deg);
+					transform: scale(1.1);
 				}
 				100% {
-					opacity: 1;
-					transform: translateY(0) scale(1) rotate(0);
+					transform: scale(1);
+				}
+			}
+
+			@keyframes heartbeat {
+				0% {
+					transform: scale(1);
+				}
+				25% {
+					transform: scale(1.05);
+				}
+				50% {
+					transform: scale(1);
+				}
+				75% {
+					transform: scale(1.05);
+				}
+				100% {
+					transform: scale(1);
+				}
+			}
+
+			@keyframes bounce-1 {
+				0%,
+				100% {
+					transform: translateY(0);
+				}
+				50% {
+					transform: translateY(-8px);
 				}
 			}
 
@@ -114,28 +208,25 @@
 				}
 			}
 
-			@keyframes float {
-				0%,
-				100% {
-					transform: translateY(0) rotate(0);
-				}
-				50% {
-					transform: translateY(-15px) rotate(5deg);
-				}
+			/* Animation Classes */
+			.fade-in {
+				animation: fadeIn 1s;
 			}
 
-			@keyframes shimmer {
-				0% {
-					transform: rotate(0deg);
-				}
-				100% {
-					transform: rotate(360deg);
-				}
+			.slide-in {
+				animation: slideIn 0.8s;
 			}
 
-			#note-container:hover {
-				transform: scale(1.02) translateY(-5px);
-				transition: all 0.3s cubic-bezier(0.18, 0.89, 0.32, 1.28);
+			.pop-in {
+				animation: popIn 0.6s;
+			}
+
+			.heartbeat {
+				animation: heartbeat 1.5s infinite;
+			}
+
+			.bounce-1 {
+				animation: bounce-1 2s infinite;
 			}
 
 			.fade-out {
@@ -178,12 +269,29 @@
 			/* Theme styles will be injected here */
 			#theme-styles {
 			}
+
+			img {
+				max-width: 100%;
+				border-radius: 16px;
+				display: block;
+				margin: 0 auto;
+				box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+				border: 2px solid rgba(255, 255, 255, 0.3);
+			}
 		</style>
 	</head>
 	<body>
-		<div id="note-container">
-			<div id="note-content"></div>
+		<div class="note-container">
+			<div id="note" class="note fade-in">
+				<div class="note-header">
+					<div class="close-btn">×</div>
+				</div>
+				<div id="note-content" class="note-content"></div>
+				<div id="note-footer" class="note-footer"></div>
+				<div id="note-sticker" class="note-sticker"></div>
+			</div>
 		</div>
+
 		<script>
 			function applyTheme(theme) {
 				const themeStyles = document.getElementById("theme-styles");
@@ -193,25 +301,37 @@
 					document.head.appendChild(style);
 				}
 
-				const css = `
-					#note-container {
-						background: ${theme.background};
-						border: ${theme.borderStyle};
-					}
-					#note-container:hover {
-						background: ${theme.background.replace("0.85", "0.9")};
-					}
-					#note-content {
-						color: ${theme.textColor};
-					}
-				`;
+				// Set css variables
+				document.documentElement.style.setProperty("--primary-color", theme.primaryColor || "#ff6b6b");
+				document.documentElement.style.setProperty("--secondary-color", theme.background || "rgba(255, 107, 107)");
+				document.documentElement.style.setProperty("--text-color", theme.textColor || "#4a4a4a");
+				document.documentElement.style.setProperty("--font-family", theme.fontFamily || "'Comic Sans MS', cursive, sans-serif");
 
-				document.getElementById("theme-styles").textContent = css;
+				// Apply note style
+				const noteElement = document.getElementById("note");
+
+				// Clear existing style classes
+				noteElement.classList.remove("default", "rounded-corners", "square-corners", "polaroid", "post-it", "cloud");
+
+				// Apply the selected style if it's not "default"
+				if (theme.noteStyle && theme.noteStyle !== "default") {
+					noteElement.classList.add(theme.noteStyle);
+				}
+
+				// Clear existing animation classes
+				noteElement.classList.remove("fade-in", "slide-in", "pop-in", "heartbeat", "bounce-1");
+
+				// Apply the selected animation
+				if (theme.animation) {
+					noteElement.classList.add(theme.animation);
+				} else {
+					noteElement.classList.add("fade-in");
+				}
 			}
 
 			// Generate decorative elements
 			function addDecorations() {
-				const container = document.getElementById("note-container");
+				const container = document.querySelector(".note");
 
 				// Add hearts
 				for (let i = 0; i < 6; i++) {
@@ -237,10 +357,19 @@
 
 			window.electron.onNoteContent((message) => {
 				const contentDiv = document.getElementById("note-content");
+				const footerDiv = document.getElementById("note-footer");
+				const stickerDiv = document.getElementById("note-sticker");
 
 				// Apply theme if provided
 				if (message.theme) {
 					applyTheme(message.theme);
+
+					// Set sticker if provided
+					if (message.theme.sticker) {
+						stickerDiv.innerText = message.theme.sticker;
+					} else {
+						stickerDiv.innerText = "";
+					}
 				}
 
 				if (message.type === "text") {
@@ -253,17 +382,34 @@
 					contentDiv.appendChild(img);
 				}
 
+				// Format and display timestamp
+				const messageTime = new Date(message.timestamp);
+				footerDiv.innerText = messageTime.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" });
+
 				// Add decorative elements
 				addDecorations();
 			});
 
-			document.body.addEventListener("click", () => {
-				const container = document.getElementById("note-container");
-				container.classList.add("fade-out");
+			document.querySelector(".close-btn").addEventListener("click", () => {
+				const noteElement = document.getElementById("note");
+				noteElement.classList.add("fade-out");
 
 				setTimeout(() => {
 					window.electron.closeNote();
 				}, 400);
+			});
+
+			// Handle click on the whole note (not just the close button)
+			document.querySelector(".note").addEventListener("click", (e) => {
+				// If the click was directly on the note (not on a child element like the close button)
+				if (e.target === document.querySelector(".note")) {
+					const noteElement = document.getElementById("note");
+					noteElement.classList.add("fade-out");
+
+					setTimeout(() => {
+						window.electron.closeNote();
+					}, 400);
+				}
 			});
 		</script>
 	</body>

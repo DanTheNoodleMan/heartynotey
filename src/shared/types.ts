@@ -11,6 +11,7 @@ export interface Room {
 	participants: User[];
 }
 
+// src/shared/types.ts - Update the NoteTheme interface
 export interface NoteTheme {
 	id: string;
 	name: string;
@@ -18,9 +19,11 @@ export interface NoteTheme {
 	textColor: string;
 	borderStyle: string;
 	icon: string;
-	frameStyle?: "heart" | "sticky" | "envelope" | "polaroid" | "cat";
-	decorStyle?: string;
+	noteStyle?: "default" | "rounded-corners" | "square-corners" | "polaroid" | "post-it" | "cloud";
+	animation?: "fade-in" | "slide-in" | "pop-in" | "heartbeat" | "bounce-1";
 	fontFamily?: string;
+	sticker?: string;
+	primaryColor?: string; // For elements like pins or decorations
 }
 
 export interface Message {
